@@ -16,6 +16,7 @@ default = []
 [dependencies]
 serde = { version = "*", features = ["derive"] }
 anyhow = "1.0"
+structopt = "0.3"
 
 # Optional dependencies
 

@@ -41,5 +41,6 @@
 
 
 mod stall_file;
+pub mod utility;
 
 pub use stall_file::*;
