@@ -9,9 +9,11 @@ The following is a change log, documenting added, removed, changed, depricated, 
 Implemented changes not yet published.
 
 ### Added
-
-### Fixed
++ N/A
 
 
 ## Stall 0.1  [2020-00-00]
 ----------------------------------------------------
+
+### Added
++ Implemented `collect` and `distribute` subcommands.

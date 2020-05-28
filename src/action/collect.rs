@@ -1,18 +1,34 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright 2020 Skylor R. Schermer.
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
-//! `.stall` file specification.
+//! Collect files into a stall.
 ////////////////////////////////////////////////////////////////////////////////
 
-use serde::Serialize;
-use serde::Deserialize;
 
-#[derive(Serialize, Deserialize)]
-pub struct Stall {
+use crate::CommonOptions;
+use crate::Config;
 
+
+use anyhow::Error;
+use log::*;
+
+use std::path::PathBuf;
+
+
+/// Executes the 'stall collect' command.
+pub fn collect(
+	into: PathBuf,
+	_common: CommonOptions,
+	config: Config) 
+	-> Result<(), Error>
+{
+	for target in config.targets {
+		info!("Collecting {:?}", target);
+	}
+	info!(".. into stall {:?}", into);
+
+	Ok(())
 }
-

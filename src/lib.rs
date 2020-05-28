@@ -1,13 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall -- a simple local configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright 2020 Skylor R. Schermer.
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
 //! Stall library modules.
 ////////////////////////////////////////////////////////////////////////////////
-// #![doc(html_root_url = "https://docs.rs/palette/0.2.1")]
+// #![doc(html_root_url = "https://docs.rs/stall/0.0.1")]
 #![warn(anonymous_parameters)]
 #![warn(bad_style)]
 #![warn(bare_trait_objects)]
@@ -40,7 +39,10 @@
 #![warn(while_true)]
 
 
-mod stall_file;
-pub mod utility;
+mod command;
+mod config;
+pub mod action;
+pub mod logger;
 
-pub use stall_file::*;
+pub use command::*;
+pub use config::*;
