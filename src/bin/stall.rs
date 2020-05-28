@@ -7,11 +7,11 @@
 //! Application entry point.
 ////////////////////////////////////////////////////////////////////////////////
 
-use stall::action;
 use stall::CommandOptions;
 use stall::Config;
 use stall::DEFAULT_CONFIG_PATH;
 use stall::logger::Logger;
+use stall::action;
 
 use structopt::StructOpt;
 use log::*;
@@ -31,17 +31,29 @@ pub fn main() -> Result<(), Error> {
 
 
     // Find the path for the config file.
-    let current_dir = std::env::current_dir()?;
+    // We do this up front because current_dir might fail due to access
+    // problems, and we only want to error out if we really need to use it.
+    let stall_dir = match &opts {
+        Collect { into, .. } => match into {
+            Some(path) => path.clone(),
+            None       => std::env::current_dir()?,
+        },
+
+        Distribute { from, .. } => match from {
+            Some(path) => path.clone(),
+            None       => std::env::current_dir()?,
+        }
+    };
     let config_path = match &opts.common().use_config {
         Some(path) => path.clone(),
-        None       => current_dir.join(DEFAULT_CONFIG_PATH),
+        None       => stall_dir.join(DEFAULT_CONFIG_PATH),
     };
 
     // Load the config file.
     let mut config = Config::load_from_file(&config_path)
         .with_context(
             || format!("Unable to load config file: {:?}", config_path))?;
-    config.normalize_paths(&current_dir);
+    config.normalize_paths(&stall_dir);
     info!("Stall file: {}", config);
 
     // Setup and start the global logger.
@@ -62,13 +74,13 @@ pub fn main() -> Result<(), Error> {
     // Dispatch to appropriate commands.
     use CommandOptions::*;
     match opts {
-        Collect { into, common } => action::collect(
-            into.unwrap_or(current_dir),
+        Collect { common, .. } => action::collect(
+            stall_dir,
             common,
             config),
 
-        Distribute { from, common } => action::distribute(
-            from.unwrap_or(current_dir),
+        Distribute { common, .. } => action::distribute(
+            stall_dir,
             common,
             config),
     }
