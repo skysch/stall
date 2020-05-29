@@ -31,8 +31,12 @@ pub struct CommonOptions {
     #[structopt(short = "n", long = "no-run")]
     pub no_run: bool,
     /// Force copy even if files are unmodified.
-    #[structopt(long = "force")]
+    #[structopt(short = "f", long = "force")]
     pub force: bool,
+    /// Promote file access warnings to errors.
+    #[structopt(short = "w", long = "promote_warnings")]
+    pub promote_warnings_to_errors: bool,
+
 }
 
 
@@ -44,7 +48,7 @@ pub enum CommandOptions {
     /// Copies files into the stall directory.
     Collect {
         /// The stall directory to copy into. Default is the current directory.
-        #[structopt(short = "i", long = "into", parse(from_os_str))]
+        #[structopt(long = "into", parse(from_os_str))]
         into: Option<PathBuf>,
         #[structopt(flatten)]
         common: CommonOptions,

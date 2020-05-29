@@ -13,18 +13,21 @@
 use crate::logger::LevelFilter;
 use crate::logger::LoggerConfig;
 use crate::logger::StdoutLogOutput;
+use crate::error::Error;
+use crate::error::Context;
 
 // External library imports.
 use serde::Deserialize;
 use serde::Serialize;
 
-use anyhow::Context;
-
-
 // Standard library imports.
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::io::BufReader;
+use std::io::BufRead;
+use std::io::Seek;
+use std::io::SeekFrom;
 use std::path::PathBuf;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -42,7 +45,7 @@ pub const DEFAULT_CONFIG_PATH: &'static str = ".stall";
 // Config
 ////////////////////////////////////////////////////////////////////////////////
 /// Application configuration data (stall file). Configures the logger and
-/// defines targets.
+/// defines files.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
@@ -54,8 +57,8 @@ pub struct Config {
     #[serde(default = "Config::default_log_levels")]
     pub log_levels: BTreeMap<Cow<'static, str>, LevelFilter>,
 
-    /// The list of targets for stall commands.
-    pub targets: Vec<PathBuf>,
+    /// The list of files to apply stall commands to.
+    pub files: Vec<Box<Path>>,
 }
 
 
@@ -65,12 +68,28 @@ impl Config {
         Config::default()
     }
 
-    /// Constructs a new `Config` with options loaded from the given file.
-    pub fn load_from_file<P>(path: P) -> Result<Self, anyhow::Error> 
+    /// Constructs a new `Config` with options read from the given file path.
+    pub fn from_path<P>(path: P) -> Result<Self, Error> 
         where P: AsRef<Path>
     {
-        let mut file = File::open(path)
+        let file = File::open(path)
             .with_context(|| "Failed to open config file.")?;
+        Config::from_file(file)
+    }
+
+    /// Constructs a new `Config` with options parsed from the given file.
+    pub fn from_file(mut file: File) -> Result<Self, Error>  {
+        match Config::parse_ron_file(&mut file) {
+            Ok(config) => Ok(config),
+            Err(_)     => {
+                file.seek(SeekFrom::Start(0))?;
+                Config::parse_list_file(&mut file)
+            },
+        }
+    }
+
+    /// Parses a `Config` from a file using the RON format.
+    fn parse_ron_file(file: &mut File) -> Result<Self, Error> {
         let len = file.metadata()
             .with_context(|| "Failed to recover file metadata.")?
             .len();
@@ -85,6 +104,30 @@ impl Config {
             .with_context(|| "Failed parsing Ron file")?;
         d.end()
             .with_context(|| "Failed parsing Ron file")?;
+
+        Ok(config) 
+    }
+    
+    /// Parses a `Config` from a file using a newline-delimited file list
+    /// format.
+    fn parse_list_file(file: &mut File) -> Result<Self, Error> {
+        let mut config = Config::default();
+        let buf_reader = BufReader::new(file);
+        for line in buf_reader.lines() {
+            let line = line
+                .with_context(|| "Failed to read config file")?;
+            
+            // Skip empty lines.
+            let line = line.trim();
+            if line.is_empty() { continue }
+
+            // Skip comment lines.
+            if line.starts_with("//") { continue }
+            if line.starts_with("#") { continue }
+
+            let path: PathBuf = line.into();
+            config.files.push(path.into());
+        }
 
         Ok(config) 
     }
@@ -126,7 +169,7 @@ impl Default for Config {
         Config {
             logger_config: Config::default_logger_config(),
             log_levels: Config::default_log_levels(),
-            targets: Vec::new(),
+            files: Vec::new(),
         }
     }
 }
@@ -137,6 +180,6 @@ impl std::fmt::Display for Config {
             self.logger_config.stdout_log_output)?;
         writeln!(fmt, "\tlogger_config/level_filter: {:?}",
             self.logger_config.level_filter)?;
-        writeln!(fmt, "\ttargets: {:?}", self.targets)
+        writeln!(fmt, "\tfiles: {:?}", self.files)
     }
 }

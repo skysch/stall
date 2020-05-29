@@ -42,6 +42,7 @@
 mod command;
 mod config;
 pub mod action;
+pub mod error;
 pub mod logger;
 
 pub use command::*;

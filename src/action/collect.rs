@@ -10,25 +10,51 @@
 
 use crate::CommonOptions;
 use crate::Config;
+use crate::error::Error;
+use crate::error::InvalidFile;
+use crate::action::copy_file;
+use crate::action::CopyMethod;
 
-
-use anyhow::Error;
 use log::*;
 
-use std::path::PathBuf;
-
+use std::path::Path;
 
 /// Executes the 'stall collect' command.
-pub fn collect(
-	into: PathBuf,
-	_common: CommonOptions,
-	config: Config) 
-	-> Result<(), Error>
+pub fn collect<P>(
+    into: P,
+    common: CommonOptions,
+    config: Config) 
+    -> Result<(), Error>
+    where P: AsRef<Path>
 {
-	for target in config.targets {
-		info!("Collecting {:?}", target);
-	}
-	info!(".. into stall {:?}", into);
+    let into = into.as_ref();
+    for source in &config.files[..] {
+        let file_name = source.file_name().ok_or(InvalidFile)?;
 
-	Ok(())
+        info!("Collecting {:?}", source);
+
+        let last_modified_file = source.metadata()?.modified()?;
+        let target = into.join(file_name);
+        
+        if !target.exists() {
+            info!("File not yet in stall.")
+        } else if target.metadata()?.modified()? > last_modified_file {
+            info!("File is newer than version in stall.")
+        } else if !common.force {
+            info!("File is older than version in stall. Skipping collection.");
+            continue;
+        } else {
+            info!("File is older than version in stall. Forcing collection.");
+        }
+
+        // If we got this far, we're collecting this file.
+        let copy_method = match common.no_run {
+            true  => CopyMethod::None,
+            false => CopyMethod::Subprocess,
+        };
+        copy_file(source, &target, copy_method)?;
+
+    }
+
+    Ok(())
 }

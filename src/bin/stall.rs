@@ -7,17 +7,17 @@
 //! Application entry point.
 ////////////////////////////////////////////////////////////////////////////////
 
+use stall::action;
 use stall::CommandOptions;
 use stall::Config;
 use stall::DEFAULT_CONFIG_PATH;
+use stall::error::Context;
+use stall::error::Error;
 use stall::logger::Logger;
-use stall::action;
 
 use structopt::StructOpt;
 use log::*;
 
-use anyhow::Error;
-use anyhow::Context;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,7 +29,6 @@ pub fn main() -> Result<(), Error> {
     let opts = CommandOptions::from_args();
     debug!("{:#?}", opts);
 
-
     // Find the path for the config file.
     // We do this up front because current_dir might fail due to access
     // problems, and we only want to error out if we really need to use it.
@@ -38,7 +37,6 @@ pub fn main() -> Result<(), Error> {
             Some(path) => path.clone(),
             None       => std::env::current_dir()?,
         },
-
         Distribute { from, .. } => match from {
             Some(path) => path.clone(),
             None       => std::env::current_dir()?,
@@ -50,9 +48,9 @@ pub fn main() -> Result<(), Error> {
     };
 
     // Load the config file.
-    let mut config = Config::load_from_file(&config_path)
-        .with_context(
-            || format!("Unable to load config file: {:?}", config_path))?;
+    let mut config = Config::from_path(&config_path)
+        .with_context(|| format!("Unable to load config file: {:?}",
+            config_path))?;
     config.normalize_paths(&stall_dir);
     info!("Stall file: {}", config);
 
