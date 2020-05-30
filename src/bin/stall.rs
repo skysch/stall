@@ -51,9 +51,11 @@ pub fn main() -> Result<(), Error> {
     for (context, level) in &config.log_levels {
         logger = logger.level_for(context.clone(), *level);
     }
-    match (opts.common().verbose, opts.common().quiet) {
-        (_, true) => (),
-        (true, _) => logger.level_for("stall", LevelFilter::Debug).start(),
+    let common = opts.common();
+    match (common.verbose, common.quiet, common.trace) {
+        (_, _, true) => logger.level_for("stall", LevelFilter::Trace).start(),
+        (_, true, _) => (),
+        (true, _, _) => logger.level_for("stall", LevelFilter::Debug).start(),
         _         => logger.level_for("stall", LevelFilter::Info).start(),
     }
 

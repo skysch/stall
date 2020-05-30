@@ -127,7 +127,7 @@ impl Logger {
         let dispatch = fern::Dispatch::new().format(|out, message, record| {
             match record.level() {
                 Level::Info => out.finish(*message),
-                _           => out.finish(format_args!(
+                _ => out.finish(format_args!(
                     "[{level}][{target}] {message}",
                     level = record.level(),
                     target = record.target(),

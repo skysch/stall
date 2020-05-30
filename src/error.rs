@@ -8,11 +8,19 @@
 //! Error types.
 ////////////////////////////////////////////////////////////////////////////////
 
-
+// Exports.
 pub use anyhow::Error;
 pub use anyhow::Context;
 
+// Standard library imports.
+use std::path::Path;
+
+
+////////////////////////////////////////////////////////////////////////////////
+// InvalidFile
+////////////////////////////////////////////////////////////////////////////////
 #[derive(Debug, Clone)]
+/// The specified file was invalid.
 pub struct InvalidFile;
 
 impl std::error::Error for InvalidFile {}
@@ -22,5 +30,26 @@ impl std::fmt::Display for InvalidFile {
 		-> Result<(), std::fmt::Error> 
 	{
 		write!(f, "Invalid file.")
+	}
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// MissingFile
+////////////////////////////////////////////////////////////////////////////////
+#[derive(Debug, Clone)]
+/// The specified file was missing.
+pub struct MissingFile { 
+	pub path: Box<Path>,
+}
+
+impl std::error::Error for MissingFile {}
+
+impl std::fmt::Display for MissingFile {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>)
+		-> Result<(), std::fmt::Error> 
+	{
+		write!(f, "missing file: {}.", self.path.display())
 	}
 }

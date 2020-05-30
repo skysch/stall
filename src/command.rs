@@ -33,7 +33,14 @@ pub struct CommonOptions {
         long = "use-config",
         parse(from_os_str))]
     pub use_config: Option<PathBuf>,
-    
+
+    /// The format of the stall file.
+    #[structopt(
+        short = "c",
+        long = "config-format",
+        possible_values(&["ron","list"]))]
+    pub config_format: Option<String>,
+
     /// Print copy operations instead of running them.
     #[structopt(short = "n", long = "dry-run")]
     pub dry_run: bool,
@@ -53,6 +60,10 @@ pub struct CommonOptions {
     /// Silences all program output.
     #[structopt(short = "q", long = "quiet", alias = "silent")]
     pub quiet: bool,
+
+    /// Print trace messages.
+    #[structopt(long = "xtrace", hidden(true))]
+    pub trace: bool,
 }
 
 ////////////////////////////////////////////////////////////////////////////////

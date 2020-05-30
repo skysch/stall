@@ -52,7 +52,7 @@ pub fn copy_file(source: &Path, target: &Path, method: CopyMethod)
 		},
 		
 		Internal => {
-            info!("Copying data from {:?} into {:?}", source, target);
+            trace!("Copying data from {:?} into {:?}", source, target);
 
             let mut source = OpenOptions::new()
                 .read(true)
