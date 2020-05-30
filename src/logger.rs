@@ -157,7 +157,7 @@ impl Logger {
             F: Fn(
                 fern::FormatCallback<'_>,
                 &fmt::Arguments<'_>,
-                &log::Record<'_>)
+                &Record<'_>)
             + Sync + Send + 'static,
     {
         let dispatch = fern::Dispatch::new().format(formatter);
@@ -176,7 +176,7 @@ impl Logger {
             F: Fn(
                 fern::FormatCallback<'_>,
                 &fmt::Arguments<'_>,
-                &log::Record<'_>)
+                &Record<'_>)
             + Sync + Send + 'static,
     {
         Logger::new_with_formatter(formatter).configure(config)

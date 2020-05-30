@@ -19,8 +19,9 @@ use std::path::Path;
 ////////////////////////////////////////////////////////////////////////////////
 // InvalidFile
 ////////////////////////////////////////////////////////////////////////////////
-#[derive(Debug, Clone)]
 /// The specified file was invalid.
+#[allow(missing_copy_implementations)]
+#[derive(Debug, Clone)]
 pub struct InvalidFile;
 
 impl std::error::Error for InvalidFile {}
@@ -38,9 +39,10 @@ impl std::fmt::Display for InvalidFile {
 ////////////////////////////////////////////////////////////////////////////////
 // MissingFile
 ////////////////////////////////////////////////////////////////////////////////
-#[derive(Debug, Clone)]
 /// The specified file was missing.
+#[derive(Debug, Clone)]
 pub struct MissingFile { 
+	/// The path of the missing file.
 	pub path: Box<Path>,
 }
 

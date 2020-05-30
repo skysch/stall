@@ -85,7 +85,7 @@ impl Config {
             Ok(config) => Ok(config),
             Err(e)     => {
                 debug!("Error in RON, switching to list format.\n{:?}", e);
-                file.seek(SeekFrom::Start(0))?;
+                let _ = file.seek(SeekFrom::Start(0))?;
                 Config::parse_list_file(&mut file)
             },
         }
@@ -97,7 +97,7 @@ impl Config {
             .with_context(|| "Failed to recover file metadata.")?
             .len();
         let mut buf = Vec::with_capacity(len as usize);
-        file.read_to_end(&mut buf)
+        let _ = file.read_to_end(&mut buf)
             .with_context(|| "Failed to read config file")?;
 
         use ron::de::Deserializer;

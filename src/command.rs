@@ -48,7 +48,7 @@ pub struct CommonOptions {
     /// Shorten filenames by omitting path prefixes.
     #[structopt(short = "s", long = "short-names")]
     pub short_names: bool,
-    
+
     /// Force copy even if files are unmodified.
     #[structopt(short = "f", long = "force")]
     pub force: bool,
@@ -74,6 +74,7 @@ pub struct CommonOptions {
 // CommandOptions
 ////////////////////////////////////////////////////////////////////////////////
 /// Command line subcommand options.
+#[allow(missing_docs)]
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
 #[derive(StructOpt)]
@@ -101,6 +102,7 @@ pub enum CommandOptions {
 }
 
 impl CommandOptions {
+    /// Returns the `CommonOptions`.
     pub fn common(&self) -> &CommonOptions {
         use CommandOptions::*;
         match self {
@@ -109,6 +111,7 @@ impl CommandOptions {
         }
     }
 
+    /// Returns the stall directory.
     pub fn stall_dir(&self) -> Result<PathBuf, std::io::Error> {
         use CommandOptions::*;
         match &self {
