@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright 2020 Skylor R. Schermer.
+// Copyright 2020 Skylor R. Schermer
 // This code is dual licensed using the MIT or Apache 2 license.
 // See license-mit.md and license-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,6 +19,8 @@ use crate::error::Context;
 // External library imports.
 use serde::Deserialize;
 use serde::Serialize;
+
+use log::*;
 
 // Standard library imports.
 use std::fs::File;
@@ -78,10 +80,11 @@ impl Config {
     }
 
     /// Constructs a new `Config` with options parsed from the given file.
-    pub fn from_file(mut file: File) -> Result<Self, Error>  {
+    fn from_file(mut file: File) -> Result<Self, Error>  {
         match Config::parse_ron_file(&mut file) {
             Ok(config) => Ok(config),
-            Err(_)     => {
+            Err(e)     => {
+                debug!("Error in RON, switching to list format.\n{:?}", e);
                 file.seek(SeekFrom::Start(0))?;
                 Config::parse_list_file(&mut file)
             },

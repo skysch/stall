@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright 2020 Skylor R. Schermer
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,7 +20,6 @@ use structopt::StructOpt;
 use log::*;
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // main
 ////////////////////////////////////////////////////////////////////////////////
@@ -27,7 +27,6 @@ use log::*;
 pub fn main() -> Result<(), Error> {
     // Parse command line options.
     let opts = CommandOptions::from_args();
-    debug!("{:#?}", opts);
 
     // Find the path for the config file.
     // We do this up front because current_dir might fail due to access
@@ -52,7 +51,6 @@ pub fn main() -> Result<(), Error> {
         .with_context(|| format!("Unable to load config file: {:?}",
             config_path))?;
     config.normalize_paths(&stall_dir);
-    info!("Stall file: {}", config);
 
     // Setup and start the global logger.
     let mut logger =  Logger::from_config(config.logger_config.clone());
@@ -62,12 +60,14 @@ pub fn main() -> Result<(), Error> {
     logger.start();
 
     // Print version information.
-    info!("Stall version: {}", env!("CARGO_PKG_VERSION"));
+    debug!("Stall version: {}", env!("CARGO_PKG_VERSION"));
     let rustc_meta = rustc_version_runtime::version_meta();
-    info!("Rustc version: {} {:?}", rustc_meta.semver, rustc_meta.channel);
+    debug!("Rustc version: {} {:?}", rustc_meta.semver, rustc_meta.channel);
     if let Some(hash) = rustc_meta.commit_hash {
-        info!("Rustc git commit: {}", hash);
+        debug!("Rustc git commit: {}", hash);
     }
+    trace!("Options: {:?}", opts);
+    trace!("Config: {:?}", config); 
 
     // Dispatch to appropriate commands.
     use CommandOptions::*;

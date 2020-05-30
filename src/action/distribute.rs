@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright 2020 Skylor R. Schermer
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
@@ -16,36 +17,57 @@ use crate::action::copy_file;
 use crate::action::CopyMethod;
 
 use log::*;
+use colored::Colorize as _;
 
 use std::path::Path;
 
 
 /// Executes the 'stall distribute' command.
 pub fn distribute<P>(
-	from: P,
-	common: CommonOptions,
-	config: Config) 
-	-> Result<(), Error>
-	where P: AsRef<Path>
+    from: P,
+    common: CommonOptions,
+    config: Config) 
+    -> Result<(), Error>
+    where P: AsRef<Path>
 {
-	let from = from.as_ref();
+    let from = from.as_ref();
+    println!("{} {}", 
+        "Copy source:".bright_white(),
+        from.display());
+    println!("{}", "    STATE ACTION FILE".bright_white());
+
     for target in &config.files[..] {
+        debug!("Processing target: {:?}", target);
         let file_name = target.file_name().ok_or(InvalidFile)?;
 
-        info!("Collecting {:?}", target);
-
-        let last_modified_file = target.metadata()?.modified()?;
         let source = from.join(file_name);
+        let target_last_modified = target.metadata()?.modified()?;
         
         if !source.exists() {
-            info!("File not yet in stall.")
-        } else if source.metadata()?.modified()? > last_modified_file {
-            info!("File is newer than version in stall.")
-        } else if !common.force {
-            info!("File is older than version in stall. Skipping collection.");
+            println!("    {}{} {}",
+                "error ".bright_red(),
+                "skip  ".bright_white(),
+                target.display());
             continue;
+
+        } else if source.metadata()?.modified()? > target_last_modified {
+            println!("    {}{} {}",
+                "newer ".bright_green(),
+                "copy  ".bright_green(),
+                target.display());
+
+        } else if !common.force {
+            println!("    {}{} {}",
+                "force ".bright_white(),
+                "copy  ".bright_green(),
+                target.display());
+
         } else {
-            info!("File is older than version in stall. Forcing collection.");
+            println!("    {}{} {}",
+                "older ".bright_yellow(),
+                "skip  ".bright_white(),
+                target.display());
+            continue;
         }
 
         // If we got this far, we're collecting this file.
@@ -54,9 +76,7 @@ pub fn distribute<P>(
             false => CopyMethod::Subprocess,
         };
         copy_file(&source, target, copy_method)?;
-
     }
 
     Ok(())
 }
-

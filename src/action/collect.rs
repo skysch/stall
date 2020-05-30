@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright 2020 Skylor R. Schermer
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
@@ -16,6 +17,7 @@ use crate::action::copy_file;
 use crate::action::CopyMethod;
 
 use log::*;
+use colored::Colorize as _;
 
 use std::path::Path;
 
@@ -28,23 +30,42 @@ pub fn collect<P>(
     where P: AsRef<Path>
 {
     let into = into.as_ref();
+    println!("{} {}", 
+        "Copy destination:".bright_white(),
+        into.display());
+    println!("{}", "    STATE ACTION FILE".bright_white());
+
     for source in &config.files[..] {
+        debug!("Processing source: {:?}", source);
         let file_name = source.file_name().ok_or(InvalidFile)?;
 
-        info!("Collecting {:?}", source);
-
-        let last_modified_file = source.metadata()?.modified()?;
         let target = into.join(file_name);
+        let target_last_modified = target.metadata()?.modified()?;
         
         if !target.exists() {
-            info!("File not yet in stall.")
-        } else if target.metadata()?.modified()? > last_modified_file {
-            info!("File is newer than version in stall.")
-        } else if !common.force {
-            info!("File is older than version in stall. Skipping collection.");
-            continue;
+            println!("    {}{} {}",
+                "found ".bright_green(),
+                "copy  ".bright_green(),
+                source.display());
+
+        } else if source.metadata()?.modified()? > target_last_modified {
+            println!("    {}{} {}",
+                "newer ".bright_green(),
+                "copy  ".bright_green(),
+                source.display());
+
+        } else if common.force {
+            println!("    {}{} {}",
+                "force ".bright_white(),
+                "copy  ".bright_green(),
+                source.display());
+
         } else {
-            info!("File is older than version in stall. Forcing collection.");
+            println!("    {}{} {}",
+                "older ".bright_yellow(),
+                "skip  ".bright_white(),
+                source.display());
+            continue;
         }
 
         // If we got this far, we're collecting this file.
@@ -53,7 +74,6 @@ pub fn collect<P>(
             false => CopyMethod::Subprocess,
         };
         copy_file(source, &target, copy_method)?;
-
     }
 
     Ok(())
