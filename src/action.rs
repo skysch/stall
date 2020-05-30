@@ -9,20 +9,108 @@
 ////////////////////////////////////////////////////////////////////////////////
 #![warn(missing_docs)]
 
+// Internal modules.
 mod collect;
 mod distribute;
 
+// Exports.
 pub use collect::*;
 pub use distribute::*;
 
+// Local imports.
 use crate::error::Error;
+use crate::CommonOptions;
 
+// External library imports.
 use log::*;
 
+use colored::Colorize as _;
+use colored::ColoredString;
+
+// Standard library imports.
 use std::path::Path;
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::io::Write;
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Common file copy function.
+////////////////////////////////////////////////////////////////////////////////
+/// The action taken for a given file.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Action {
+	/// The file was copied.
+	Copy,
+	/// The file was skipped.
+	Skip,
+	/// The command was stopped.
+	Stop,
+}
+
+impl Action {
+	fn colored_string(&self) -> ColoredString {
+		match self {
+			Action::Copy => "copy  ".bright_green(),
+			Action::Skip => "skip  ".bright_white(),
+			Action::Stop => "stop  ".bright_red(),
+		}
+	}
+}
+
+/// The state of the source file relative to the target file.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum State {
+	/// The file was not available.
+	Error,
+	/// The file was copied even though it is older than the target.
+	Force,
+	/// The source file was found, but the target was not.
+	Found,
+	/// The source file is newer than the target.
+	Newer,
+	/// The source file is older than the target.
+	Older,
+}
+
+impl State {
+	fn colored_string(&self) -> ColoredString {
+		match self {
+			State::Error => "error ".bright_red(),
+			State::Force => "force ".bright_white(),
+			State::Found => "found ".bright_green(),
+			State::Newer => "newer ".bright_green(),
+			State::Older => "older ".bright_yellow(),
+		}
+	}
+}
+
+/// Prints the status header.
+pub fn print_status_header() {
+	info!("{}", "    STATE ACTION FILE".bright_white().bold());
+}
+
+/// Prints the status line for a file.
+pub fn print_status_line(
+	state: State,
+	action: Action,
+	mut path: &Path,
+	common: &CommonOptions)
+{
+	if common.short_names {
+		// Fall back to full name if `Path::file_name` method returns `None`.
+		// This should never happen, but there's no reason to fail.
+		if let Some(name) = path.file_name() {
+			path = name.as_ref();
+		}
+	}
+
+	info!("    {}{} {}", 
+		state.colored_string(),
+		action.colored_string(),
+		path.display());
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Common file copy function.
@@ -52,7 +140,7 @@ pub fn copy_file(source: &Path, target: &Path, method: CopyMethod)
 		},
 		
 		Internal => {
-            trace!("Copying data from {:?} into {:?}", source, target);
+            trace!("Copying from {:?} into {:?}", source, target);
 
             let mut source = OpenOptions::new()
                 .read(true)
@@ -76,6 +164,9 @@ pub fn copy_file(source: &Path, target: &Path, method: CopyMethod)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+// CopyMethod
+////////////////////////////////////////////////////////////////////////////////
 /// The method to use when copying files.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CopyMethod {

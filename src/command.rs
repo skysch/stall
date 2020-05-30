@@ -45,23 +45,27 @@ pub struct CommonOptions {
     #[structopt(short = "n", long = "dry-run")]
     pub dry_run: bool,
     
+    /// Shorten filenames by omitting path prefixes.
+    #[structopt(short = "s", long = "short-names")]
+    pub short_names: bool,
+    
     /// Force copy even if files are unmodified.
     #[structopt(short = "f", long = "force")]
     pub force: bool,
     
-    /// Promote file access warnings to errors.
+    /// Promote file access warnings into errors.
     #[structopt(short = "e", long = "error")]
     pub promote_warnings_to_errors: bool,
     
-    /// Silences any program output.
+    /// Provides more detailed messages.
     #[structopt(short = "v", long = "verbose")]
     pub verbose: bool,
 
-    /// Silences all program output.
+    /// Silences all program output. This override --verbose if both are provided.
     #[structopt(short = "q", long = "quiet", alias = "silent")]
     pub quiet: bool,
 
-    /// Print trace messages.
+    /// Print trace messages. This override --quiet if both are provided.
     #[structopt(long = "xtrace", hidden(true))]
     pub trace: bool,
 }

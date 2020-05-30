@@ -56,15 +56,15 @@ pub fn main() -> Result<(), Error> {
         (_, _, true) => logger.level_for("stall", LevelFilter::Trace).start(),
         (_, true, _) => (),
         (true, _, _) => logger.level_for("stall", LevelFilter::Debug).start(),
-        _         => logger.level_for("stall", LevelFilter::Info).start(),
+        _            => logger.level_for("stall", LevelFilter::Info).start(),
     }
 
     // Print version information.
     debug!("Stall version: {}", env!("CARGO_PKG_VERSION"));
     let rustc_meta = rustc_version_runtime::version_meta();
-    debug!("Rustc version: {} {:?}", rustc_meta.semver, rustc_meta.channel);
+    trace!("Rustc version: {} {:?}", rustc_meta.semver, rustc_meta.channel);
     if let Some(hash) = rustc_meta.commit_hash {
-        debug!("Rustc git commit: {}", hash);
+        trace!("Rustc git commit: {}", hash);
     }
     trace!("Options: {:?}", opts);
     trace!("Config: {:?}", config); 
