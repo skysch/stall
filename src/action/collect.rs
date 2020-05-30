@@ -30,10 +30,11 @@ pub fn collect<P>(
     where P: AsRef<Path>
 {
     let into = into.as_ref();
-    println!("{} {}", 
+    info!("{} {}", 
         "Copy destination:".bright_white(),
         into.display());
-    println!("{}", "    STATE ACTION FILE".bright_white());
+    info!("{}", "    STATE ACTION FILE".bright_white());
+    
 
     for source in &config.files[..] {
         debug!("Processing source: {:?}", source);
@@ -42,26 +43,27 @@ pub fn collect<P>(
         let target = into.join(file_name);
         let target_last_modified = target.metadata()?.modified()?;
         
+
         if !target.exists() {
-            println!("    {}{} {}",
+            info!("    {}{} {}",
                 "found ".bright_green(),
                 "copy  ".bright_green(),
                 source.display());
 
         } else if source.metadata()?.modified()? > target_last_modified {
-            println!("    {}{} {}",
+            info!("    {}{} {}",
                 "newer ".bright_green(),
                 "copy  ".bright_green(),
                 source.display());
 
         } else if common.force {
-            println!("    {}{} {}",
+            info!("    {}{} {}",
                 "force ".bright_white(),
                 "copy  ".bright_green(),
                 source.display());
 
         } else {
-            println!("    {}{} {}",
+            info!("    {}{} {}",
                 "older ".bright_yellow(),
                 "skip  ".bright_white(),
                 source.display());
@@ -69,7 +71,7 @@ pub fn collect<P>(
         }
 
         // If we got this far, we're collecting this file.
-        let copy_method = match common.no_run {
+        let copy_method = match common.dry_run {
             true  => CopyMethod::None,
             false => CopyMethod::Subprocess,
         };

@@ -29,22 +29,6 @@ pub use log::LevelFilter;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// StdoutLogOutput
-////////////////////////////////////////////////////////////////////////////////
-/// Options for logging to the terminal.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum StdoutLogOutput {
-    /// Disables logging to the terminal.
-    Off,
-    /// Enables logging to the terminal without colored output.
-    Plain,
-    /// Enables logging to the terminal with colored output on supported 
-    /// platforms.
-    Colored,
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 // LoggerConfig
 ////////////////////////////////////////////////////////////////////////////////
 /// Logger configuration parameters.
@@ -106,6 +90,23 @@ impl Default for LoggerConfig {
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// StdoutLogOutput
+////////////////////////////////////////////////////////////////////////////////
+/// Options for logging to the terminal.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub enum StdoutLogOutput {
+    /// Disables logging to the terminal.
+    Off,
+    /// Enables logging to the terminal without colored output.
+    Plain,
+    /// Enables logging to the terminal with colored output on supported 
+    /// platforms.
+    Colored,
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Logger
 ////////////////////////////////////////////////////////////////////////////////
 /// Logger interface for creating and setting up the global logger.
@@ -124,12 +125,14 @@ impl Logger {
     /// Constructs a new Logger with the default settings.
     fn new() -> Self {
         let dispatch = fern::Dispatch::new().format(|out, message, record| {
-            out.finish(format_args!(
-                "[{level}][{target}] {message}",
-                level = record.level(),
-                target = record.target(),
-                message = message,
-            ))
+            match record.level() {
+                Level::Info => out.finish(*message),
+                _           => out.finish(format_args!(
+                    "[{level}][{target}] {message}",
+                    level = record.level(),
+                    target = record.target(),
+                    message = message)),
+            }
         });
 
         Self { dispatch }

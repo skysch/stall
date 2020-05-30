@@ -31,10 +31,10 @@ pub fn distribute<P>(
     where P: AsRef<Path>
 {
     let from = from.as_ref();
-    println!("{} {}", 
+    info!("{} {}", 
         "Copy source:".bright_white(),
         from.display());
-    println!("{}", "    STATE ACTION FILE".bright_white());
+    info!("{}", "    STATE ACTION FILE".bright_white());
 
     for target in &config.files[..] {
         debug!("Processing target: {:?}", target);
@@ -44,26 +44,26 @@ pub fn distribute<P>(
         let target_last_modified = target.metadata()?.modified()?;
         
         if !source.exists() {
-            println!("    {}{} {}",
+            info!("    {}{} {}",
                 "error ".bright_red(),
                 "skip  ".bright_white(),
                 target.display());
             continue;
 
         } else if source.metadata()?.modified()? > target_last_modified {
-            println!("    {}{} {}",
+            info!("    {}{} {}",
                 "newer ".bright_green(),
                 "copy  ".bright_green(),
                 target.display());
 
         } else if !common.force {
-            println!("    {}{} {}",
+            info!("    {}{} {}",
                 "force ".bright_white(),
                 "copy  ".bright_green(),
                 target.display());
 
         } else {
-            println!("    {}{} {}",
+            info!("    {}{} {}",
                 "older ".bright_yellow(),
                 "skip  ".bright_white(),
                 target.display());
@@ -71,7 +71,7 @@ pub fn distribute<P>(
         }
 
         // If we got this far, we're collecting this file.
-        let copy_method = match common.no_run {
+        let copy_method = match common.dry_run {
             true  => CopyMethod::None,
             false => CopyMethod::Subprocess,
         };

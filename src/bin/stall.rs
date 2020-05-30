@@ -8,6 +8,7 @@
 //! Application entry point.
 ////////////////////////////////////////////////////////////////////////////////
 
+// Local imports.
 use stall::action;
 use stall::CommandOptions;
 use stall::Config;
@@ -16,8 +17,10 @@ use stall::error::Context;
 use stall::error::Error;
 use stall::logger::Logger;
 
+// External library imports.
 use structopt::StructOpt;
 use log::*;
+pub use log::LevelFilter;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -31,16 +34,7 @@ pub fn main() -> Result<(), Error> {
     // Find the path for the config file.
     // We do this up front because current_dir might fail due to access
     // problems, and we only want to error out if we really need to use it.
-    let stall_dir = match &opts {
-        Collect { into, .. } => match into {
-            Some(path) => path.clone(),
-            None       => std::env::current_dir()?,
-        },
-        Distribute { from, .. } => match from {
-            Some(path) => path.clone(),
-            None       => std::env::current_dir()?,
-        }
-    };
+    let stall_dir = opts.stall_dir()?;
     let config_path = match &opts.common().use_config {
         Some(path) => path.clone(),
         None       => stall_dir.join(DEFAULT_CONFIG_PATH),
@@ -57,7 +51,11 @@ pub fn main() -> Result<(), Error> {
     for (context, level) in &config.log_levels {
         logger = logger.level_for(context.clone(), *level);
     }
-    logger.start();
+    match (opts.common().verbose, opts.common().quiet) {
+        (_, true) => (),
+        (true, _) => logger.level_for("stall", LevelFilter::Debug).start(),
+        _         => logger.level_for("stall", LevelFilter::Info).start(),
+    }
 
     // Print version information.
     debug!("Stall version: {}", env!("CARGO_PKG_VERSION"));
