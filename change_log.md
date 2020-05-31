@@ -17,3 +17,11 @@ Implemented changes not yet published.
 
 ### Added
 + Implemented `collect` and `distribute` subcommands.
++ Implemented `RON` and `list` style config formats.
++ Implemented `--use-config` flag to choose the config file explicitely.
++ Implemented `--config-format` flag to choose the config format explicitely, rather than using the try-parse-and-fallback approach.
++ Implemented `--dry-run` flag for testing.
++ Implemented `--short-names` flag to help output readability for familiar stalls.
++ Implemented `--force` flag to force copy older files.
++ Implemented `--error` flag to exit with and error if a file is missing or unreadable.
++ Implemented `--verbose`, `--quiet`, and `--ztrace` flags to control output verbosity.

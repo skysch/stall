@@ -66,7 +66,7 @@ pub struct CommonOptions {
     pub quiet: bool,
 
     /// Print trace messages. This override --quiet if both are provided.
-    #[structopt(long = "xtrace", hidden(true))]
+    #[structopt(long = "ztrace", hidden(true))]
     pub trace: bool,
 }
 

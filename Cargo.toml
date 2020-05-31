@@ -1,6 +1,6 @@
 [package]
 name = "stall-rs"
-version = "0.0.4"
+version = "0.1.0"
 authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 edition = "2018"
 license = "MIT or Apache-2.0"
@@ -22,6 +22,7 @@ log = { version = "*", features = ["serde"] }
 fern = { version = "*", features = ["colored"] }
 ron = "*"
 colored = "1.9"
+
 
 # Optional dependencies
 

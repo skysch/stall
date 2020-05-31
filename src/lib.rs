@@ -40,11 +40,15 @@
 #![warn(while_true)]
 
 
+// Internal modules.
 mod command;
 mod config;
+
+// Public modules.
 pub mod action;
 pub mod error;
 pub mod logger;
 
+// Exports.
 pub use command::*;
 pub use config::*;

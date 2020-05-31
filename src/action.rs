@@ -46,6 +46,7 @@ pub enum Action {
 }
 
 impl Action {
+	/// Returns a colored string block representation of the Action.
 	fn colored_string(&self) -> ColoredString {
 		match self {
 			Action::Copy => "copy  ".bright_green(),
@@ -71,6 +72,7 @@ pub enum State {
 }
 
 impl State {
+	/// Returns a colored string block representation of the State.
 	fn colored_string(&self) -> ColoredString {
 		match self {
 			State::Error => "error ".bright_red(),
@@ -118,7 +120,7 @@ pub fn copy_file(source: &Path, target: &Path, method: CopyMethod)
 {
 	use CopyMethod::*;
 	match method {
-		None => info!("no-run flag was specified: \
+		None => trace!("no-run flag was specified: \
             Not copying data from {:?} to {:?}", source, target),
 
 		Subprocess => {

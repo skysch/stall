@@ -74,12 +74,12 @@ pub fn main() -> Result<(), Error> {
     match opts {
         Collect { common, .. } => action::collect(
             stall_dir,
-            common,
-            config),
+            config.files.iter().map(|p| &**p),
+            common),
 
         Distribute { common, .. } => action::distribute(
             stall_dir,
-            common,
-            config),
+            config.files.iter().map(|p| &**p),
+            common),
     }
 }
