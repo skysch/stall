@@ -28,6 +28,7 @@ use colored::Colorize as _;
 // Standard library imports.
 use std::path::Path;
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // distribute
 ////////////////////////////////////////////////////////////////////////////////
@@ -136,7 +137,7 @@ pub fn distribute<'i, P, I>(
                 print_status_line(Error, Stop, &source, &common);
                 return Err(MissingFile { path: source.into() }.into());
             } else {
-                print_status_line(Older, Skip, &source, &common);
+                print_status_line(Error, Skip, &source, &common);
                 continue;
             },
         }
