@@ -11,6 +11,8 @@ Implemented changes not yet published.
 ### Added
 + N/A
 
+### Fixed
++ Fixed 'STATE' label for the error-skip case on the distribute command.
 
 ## Stall 0.1  [2020-00-00]
 ----------------------------------------------------
