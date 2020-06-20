@@ -27,7 +27,19 @@ pub use log::LevelFilter;
 // main
 ////////////////////////////////////////////////////////////////////////////////
 /// The application entry point.
-pub fn main() -> Result<(), Error> {
+pub fn main() {
+    if let Err(err) = main_facade() {
+        // Print errors to stderr and exit with error code.
+        eprintln!("{}", err);
+        std::process::exit(1);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// main_facade
+////////////////////////////////////////////////////////////////////////////////
+/// The application facade for propagating user errors.
+pub fn main_facade() -> Result<(), Error> {
     // Parse command line options.
     let opts = CommandOptions::from_args();
 
