@@ -9,7 +9,11 @@ This allows you to gather all of your files in a central location for editting a
 
 # Installation
 
-Currently you must build `stall` from source. Clone this repository, install Rust, run `Cargo build --release`, and move the compiled binary into your `$PATH` somewhere.
+There are currently two install options: 
+
+1. [Install cargo](https://crates.io/) and run `cargo install stall`.
+
+2. Build `stall` from source. Clone this repository, install Rust, run `Cargo build --release`, and move the compiled binary into your `$PATH` somewhere.
 
 
 # License
