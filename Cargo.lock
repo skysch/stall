@@ -230,7 +230,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "stall-rs"
+name = "stall"
 version = "0.1.3"
 dependencies = [
  "anyhow",
