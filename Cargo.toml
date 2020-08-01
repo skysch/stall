@@ -39,7 +39,7 @@ colored = "1.9"
 # The development profile, used for `cargo build`
 [profile.dev]
 opt-level = 0
-debug = false # Disabled to speed up compilation; not being used much.
+debug = true
 rpath = false
 lto = false
 debug-assertions = true
