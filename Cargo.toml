@@ -4,11 +4,11 @@ version = "0.1.3"
 authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/skysch/stall-rs"
+repository = "https://github.com/solarretrace/stall-rs"
 description = "A simple local configuration management utility"
 readme = "readme.md"
 keywords = []
-homepage = "https://github.com/skysch/stall-rs"
+homepage = "https://github.com/solarretrace/stall-rs"
 exclude = ["*.sublime-project", "*.sublime-workspace", ".stall"]
 
 [lib]
