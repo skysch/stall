@@ -17,7 +17,7 @@ mod distribute;
 pub use collect::*;
 pub use distribute::*;
 
-// Local imports.
+// Internal library imports.
 use crate::error::Error;
 use crate::CommonOptions;
 

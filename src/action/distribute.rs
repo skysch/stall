@@ -8,7 +8,7 @@
 //! Distribute files from a stall.
 ////////////////////////////////////////////////////////////////////////////////
 
-// Local imports.
+// Internal library imports.
 use crate::action::Action;
 use crate::action::copy_file;
 use crate::action::CopyMethod;

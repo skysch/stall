@@ -8,7 +8,7 @@
 //! Application entry point.
 ////////////////////////////////////////////////////////////////////////////////
 
-// Local imports.
+// Internal library imports.
 use stall::action;
 use stall::CommandOptions;
 use stall::Config;

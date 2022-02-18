@@ -8,7 +8,7 @@
 //! Collect files into a stall.
 ////////////////////////////////////////////////////////////////////////////////
 
-// Local imports.
+// Internal library imports.
 use crate::CommonOptions;
 use crate::error::Error;
 use crate::error::InvalidFile;

@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #![warn(missing_docs)]
 
-// Local imports.
+// Internal library imports.
 use crate::logger::LevelFilter;
 use crate::logger::LoggerConfig;
 use crate::logger::StdoutLogOutput;
