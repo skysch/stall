@@ -1,6 +1,6 @@
 [package]
 name = "stall"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
