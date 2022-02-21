@@ -9,11 +9,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+// Internal library imports.
+use crate::config::ConfigFormat;
+
 // External library imports.
+use clap::Parser;
 use serde::Deserialize;
 use serde::Serialize;
-
-use structopt::StructOpt;
 
 // Standard library imports.
 use std::path::PathBuf;
@@ -25,48 +27,64 @@ use std::path::PathBuf;
 /// Command line options shared between subcommands.
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
-#[derive(StructOpt)]
+#[derive(Parser)]
 pub struct CommonOptions {
     /// The stall file to use.
-    #[structopt(
-        short = "u",
+    #[clap(
+        short = 'u',
         long = "use-config",
         parse(from_os_str))]
     pub use_config: Option<PathBuf>,
 
     /// The format of the stall file.
-    #[structopt(
-        short = "c",
+    #[clap(
+        short = 'c',
         long = "config-format",
-        possible_values(&["ron","list"]))]
-    pub config_format: Option<String>,
+        default_value = "list",
+        arg_enum)]
+    pub config_format: ConfigFormat,
 
     /// Print copy operations instead of running them.
-    #[structopt(short = "n", long = "dry-run")]
+    #[clap(
+        short = 'n',
+        long = "dry-run")]
     pub dry_run: bool,
     
     /// Shorten filenames by omitting path prefixes.
-    #[structopt(short = "s", long = "short-names")]
+    #[clap(
+        short = 's',
+        long = "short-names")]
     pub short_names: bool,
 
     /// Force copy even if files are unmodified.
-    #[structopt(short = "f", long = "force")]
+    #[clap(
+        short = 'f',
+        long = "force")]
     pub force: bool,
     
     /// Promote file access warnings into errors.
-    #[structopt(short = "e", long = "error")]
+    #[clap(
+        short = 'e',
+        long = "error")]
     pub promote_warnings_to_errors: bool,
     
     /// Provides more detailed messages.
-    #[structopt(short = "v", long = "verbose")]
+    #[clap(
+        short = 'v',
+        long = "verbose")]
     pub verbose: bool,
 
     /// Silences all program output. This override --verbose if both are provided.
-    #[structopt(short = "q", long = "quiet", alias = "silent")]
+    #[clap(
+        short = 'q',
+        long = "quiet",
+        alias = "silent")]
     pub quiet: bool,
 
     /// Print trace messages. This override --quiet if both are provided.
-    #[structopt(long = "ztrace", hidden(true))]
+    #[clap(
+        long = "ztrace",
+        hide(true))]
     pub trace: bool,
 }
 
@@ -77,26 +95,30 @@ pub struct CommonOptions {
 #[allow(missing_docs)]
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
-#[derive(StructOpt)]
-#[structopt(name = "stall")]
+#[derive(Parser)]
+#[clap(name = "stall")]
 pub enum CommandOptions {
     /// Copies files into the stall directory.
     Collect {
         /// The stall directory to copy into. Default is the current directory.
-        #[structopt(long = "into", parse(from_os_str))]
+        #[clap(
+            long = "into",
+            parse(from_os_str))]
         into: Option<PathBuf>,
 
-        #[structopt(flatten)]
+        #[clap(flatten)]
         common: CommonOptions,
     },
 
     /// Copies files from the stall directory to their sources.
     Distribute {
         /// The stall directory to copy from. Default is the current directory.
-        #[structopt(long = "from", parse(from_os_str))]
+        #[clap(
+            long = "from",
+            parse(from_os_str))]
         from: Option<PathBuf>,
 
-        #[structopt(flatten)]
+        #[clap(flatten)]
         common: CommonOptions,
     },
 }

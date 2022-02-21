@@ -18,7 +18,7 @@ use stall::error::Error;
 use stall::logger::Logger;
 
 // External library imports.
-use structopt::StructOpt;
+use clap::Parser;
 use log::*;
 pub use log::LevelFilter;
 
@@ -41,7 +41,7 @@ pub fn main() {
 /// The application facade for propagating user errors.
 pub fn main_facade() -> Result<(), Error> {
     // Parse command line options.
-    let opts = CommandOptions::from_args();
+    let opts = CommandOptions::try_parse()?;
 
     // Find the path for the config file.
     // We do this up front because current_dir might fail due to access

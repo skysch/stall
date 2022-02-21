@@ -31,8 +31,53 @@ use std::io::BufRead;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
+
+
+/// The storage format to use for the stall configuration.
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize)]
+#[derive(clap::ArgEnum)]
+pub enum ConfigFormat {
+    /// A stall file serialized as a UTF-8 list of files.
+    List,
+    /// A stall file serialized as RON.
+    Ron,
+}
+
+impl FromStr for ConfigFormat {
+    type Err = ConfigFormatParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.eq_ignore_ascii_case("list") {
+            Ok(ConfigFormat::List)
+        } else if s.eq_ignore_ascii_case("ron") {
+            Ok(ConfigFormat::Ron)
+        } else {
+            Err(ConfigFormatParseError)
+        }
+    }
+}
+
+/// An error indicating a failure to parse a [`ConfigFormat`].
+///
+/// [`ConfigFormat`]: ConfigFormat 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ConfigFormatParseError;
+
+impl std::error::Error for ConfigFormatParseError {}
+
+impl std::fmt::Display for ConfigFormatParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "failure to parse ConfigFormat")
+    }
+}
+
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
