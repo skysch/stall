@@ -1,26 +1,27 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright 2020 Skylor R. Schermer
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
 //! Application entry point.
 ////////////////////////////////////////////////////////////////////////////////
 
+
 // Internal library imports.
+use stall::application::Config;
+use stall::application::TraceGuard;
 use stall::action;
 use stall::CommandOptions;
-use stall::Config;
-use stall::DEFAULT_CONFIG_PATH;
-use stall::error::Context;
-use stall::error::Error;
-use stall::logger::Logger;
 
 // External library imports.
+use anyhow::Context;
+use anyhow::Error;
 use clap::Parser;
-use log::*;
-pub use log::LevelFilter;
+use tracing::event;
+use tracing::Level;
+use tracing::span;
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -28,9 +29,19 @@ pub use log::LevelFilter;
 ////////////////////////////////////////////////////////////////////////////////
 /// The application entry point.
 pub fn main() {
-    if let Err(err) = main_facade() {
+    // The worker_guard holds the worker thread handle for the nonblocking
+    // trace writer. It should be held until all tracing is complete, as any
+    // trace spans or events after it is dropped will be ignored.
+    let mut trace_guard = TraceGuard::default();
+
+    if let Err(err) = main_facade(&mut trace_guard) {
+        // Trace errors without coloring.
+        colored::control::set_override(false);
+        event!(Level::ERROR, "{:?}", err);
+
         // Print errors to stderr and exit with error code.
-        eprintln!("{}", err);
+        colored::control::unset_override();
+        eprintln!("{:?}", err);
         std::process::exit(1);
     }
 }
@@ -39,51 +50,60 @@ pub fn main() {
 // main_facade
 ////////////////////////////////////////////////////////////////////////////////
 /// The application facade for propagating user errors.
-pub fn main_facade() -> Result<(), Error> {
+pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
     // Parse command line options.
-    let opts = CommandOptions::try_parse()?;
+    let command = CommandOptions::try_parse()?;
+    let common = command.common();
 
     // Find the path for the config file.
     // We do this up front because current_dir might fail due to access
     // problems, and we only want to error out if we really need to use it.
-    let stall_dir = opts.stall_dir()?;
-    let config_path = match &opts.common().use_config {
+    let stall_dir = command.stall_dir()?;
+    let config_path = match &common.use_config {
         Some(path) => path.clone(),
-        None       => stall_dir.join(DEFAULT_CONFIG_PATH),
+        None       => stall_dir.join(Config::DEFAULT_CONFIG_PATH),
     };
 
     // Load the config file.
-    let mut config = Config::from_path(&config_path)
-        .with_context(|| format!("Unable to load config file: {:?}",
-            config_path))?;
-    config.normalize_paths(&stall_dir);
+    let mut config_load_status = Ok(());
+    let config = Config::read_from_path(&config_path)
+        .with_context(|| format!("Unable to load config file: {:?}", 
+            config_path))
+        .unwrap_or_else(|e| {
+            // Store the error for output until after the logger is configured.
+            config_load_status = Err(e);
+            Config::new().with_load_path(&config_path)
+        });
 
-    // Setup and start the global logger.
-    let mut logger =  Logger::from_config(config.logger_config.clone());
-    for (context, level) in &config.log_levels {
-        logger = logger.level_for(context.clone(), *level);
-    }
-    let common = opts.common();
-    match (common.verbose, common.quiet, common.trace) {
-        (_, _, true) => logger.level_for("stall", LevelFilter::Trace).start(),
-        (_, true, _) => (),
-        (true, _, _) => logger.level_for("stall", LevelFilter::Debug).start(),
-        _            => logger.level_for("stall", LevelFilter::Info).start(),
-    }
+    // Initialize the global tracing subscriber.
+    let base_level = match (common.verbose, common.quiet, common.trace) {
+        (_, _, true) => Level::TRACE,
+        (_, true, _) => Level::WARN,
+        (true, _, _) => Level::INFO,
+        _            => Level::WARN,
+    };
+    *trace_guard = config.trace_config.init_global_default(base_level)?;
+    let _span = span!(Level::INFO, "main").entered();
+
 
     // Print version information.
-    debug!("Stall version: {}", env!("CARGO_PKG_VERSION"));
+    event!(Level::INFO, "Atma version: {}", env!("CARGO_PKG_VERSION"));
+    #[cfg(feature = "png")]
+    event!(Level::INFO, "PNG support enabled.");
+    #[cfg(feature = "termsize")]
+    event!(Level::INFO, "Terminal size detection support enabled.");
     let rustc_meta = rustc_version_runtime::version_meta();
-    trace!("Rustc version: {} {:?}", rustc_meta.semver, rustc_meta.channel);
+    event!(Level::DEBUG, "Rustc version: {} {:?}", rustc_meta.semver, rustc_meta.channel);
     if let Some(hash) = rustc_meta.commit_hash {
-        trace!("Rustc git commit: {}", hash);
+        event!(Level::DEBUG, "Rustc git commit: {}", hash);
     }
-    trace!("Options: {:?}", opts);
-    trace!("Config: {:?}", config); 
+    event!(Level::DEBUG, "{:#?}", common);
+    event!(Level::DEBUG, "{:#?}", command);
+    event!(Level::DEBUG, "{:#?}", config);
 
     // Dispatch to appropriate commands.
     use CommandOptions::*;
-    match opts {
+    match command {
         Collect { common, .. } => action::collect(
             stall_dir,
             config.files.iter().map(|p| &**p),
@@ -95,3 +115,4 @@ pub fn main_facade() -> Result<(), Error> {
             common),
     }
 }
+

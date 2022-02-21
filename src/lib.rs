@@ -1,7 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall -- a simple local configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright 2020 Skylor R. Schermer
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
@@ -42,13 +41,11 @@
 
 // Internal modules.
 mod command;
-mod config;
 
 // Public modules.
+pub mod application;
 pub mod action;
 pub mod error;
-pub mod logger;
 
 // Exports.
 pub use command::*;
-pub use config::*;

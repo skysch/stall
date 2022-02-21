@@ -1,7 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright 2020 Skylor R. Schermer
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
@@ -10,10 +9,8 @@
 
 // Internal library imports.
 use crate::CommonOptions;
-use crate::error::Error;
 use crate::error::InvalidFile;
 use crate::error::MissingFile;
-use crate::error::Context;
 use crate::action::Action;
 use crate::action::copy_file;
 use crate::action::CopyMethod;
@@ -22,7 +19,11 @@ use crate::action::print_status_line;
 use crate::action::State;
 
 // External library imports.
-use log::*;
+use anyhow::Error;
+use anyhow::Context;
+use tracing::event;
+use tracing::span;
+use tracing::Level;
 use colored::Colorize as _;
 
 // Standard library imports.
@@ -82,8 +83,10 @@ pub fn collect<'i, P, I>(
         P: AsRef<Path>,
         I: IntoIterator<Item=&'i Path>
 {
+    let _span = span!(Level::INFO, "collect").entered();
+
     let into = into.as_ref();
-    info!("{} {}", 
+    println!("{} {}", 
         "Destination directory:".bright_white(),
         into.display());
 
@@ -91,12 +94,12 @@ pub fn collect<'i, P, I>(
         true  => CopyMethod::None,
         false => CopyMethod::Subprocess,
     };
-    debug!("Copy method: {:?}", copy_method);
+    event!(Level::DEBUG, "Copy method: {:?}", copy_method);
 
     print_status_header();
 
     for source in files {
-        debug!("Processing source file: {:?}", source);
+        event!(Level::DEBUG, "Processing source file: {:?}", source);
         let file_name = source.file_name().ok_or(InvalidFile)?;
         let target = into.join(file_name);
 
@@ -109,12 +112,18 @@ pub fn collect<'i, P, I>(
                     .with_context(|| "load source metadata")?
                     .modified()
                     .with_context(|| "load source modified time")?;
-                trace!("Source last modified: {:?}", source_last_modified);
+                event!(
+                    Level::TRACE, 
+                    "Source last modified: {:?}",
+                    source_last_modified);
                 let target_last_modified = target.metadata()
                     .with_context(|| "load target metadata")?
                     .modified()
                     .with_context(|| "load target modified time")?;
-                trace!("Target last modified: {:?}", source_last_modified);
+                event!(
+                    Level::TRACE, 
+                    "Target last modified: {:?}",
+                    source_last_modified);
 
                 if source_last_modified > target_last_modified {
                     print_status_line(Newer, Copy, source, &common);

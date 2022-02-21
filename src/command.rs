@@ -1,7 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright 2020 Skylor R. Schermer
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
@@ -10,7 +9,7 @@
 
 
 // Internal library imports.
-use crate::config::ConfigFormat;
+use crate::application::ConfigFormat;
 
 // External library imports.
 use clap::Parser;

@@ -3,18 +3,30 @@
 
 The following is a change log, documenting added, removed, changed, depricated, and fixed features, along with the version number and official release date of that version.
 
-## Unreleased
--------------
+## Stall 0.2  [2022-02-??] (Unreleased)
+----------------------------------------------------
 
 Implemented changes not yet published.
 
 ### Added
-+ N/A
++ (TODO) Added `add` command.
++ (TODO) Added `rm` command.
++ (TODO) Added `status` command.
++ (TODO) Added support for file renaming.
++ (TODO) Added support for directories.
++ (TODO) Show both file states for readability.
 
 ### Fixed
 + Fixed 'STATE' label for the error-skip case on the distribute command.
 
-## Stall 0.1  [2020-00-00]
+### Updated
++ Replaced structopt with clap 3.1.
++ Replaced structopt with clap 3.1.
++ (TODO) Update application framework; replace logging with tracing.
++ (TODO) Use fcmp to compare files.
+
+
+## Stall 0.1  [2020-07-01]
 ----------------------------------------------------
 
 ### Added

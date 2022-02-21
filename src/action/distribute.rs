@@ -1,7 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright 2020 Skylor R. Schermer
 // This code is dual licenced using the MIT or Apache 2 license.
 // See licence-mit.md and licence-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
@@ -16,13 +15,15 @@ use crate::action::print_status_header;
 use crate::action::print_status_line;
 use crate::action::State;
 use crate::CommonOptions;
-use crate::error::Context;
-use crate::error::Error;
 use crate::error::InvalidFile;
 use crate::error::MissingFile;
 
 // External library imports.
-use log::*;
+use anyhow::Context;
+use anyhow::Error;
+use tracing::event;
+use tracing::span;
+use tracing::Level;
 use colored::Colorize as _;
 
 // Standard library imports.
@@ -83,8 +84,10 @@ pub fn distribute<'i, P, I>(
         P: AsRef<Path>,
         I: IntoIterator<Item=&'i Path>
 {
+    let _span = span!(Level::INFO, "distribute").entered();
+
     let from = from.as_ref();
-    info!("{} {}", 
+    println!("{} {}", 
         "Source directory:".bright_white(),
         from.display());
 
@@ -92,12 +95,12 @@ pub fn distribute<'i, P, I>(
         true  => CopyMethod::None,
         false => CopyMethod::Subprocess,
     };
-    debug!("Copy method: {:?}", copy_method);
+    event!(Level::DEBUG, "Copy method: {:?}", copy_method);
 
     print_status_header();
 
     for target in files {
-        debug!("Processing target file: {:?}", target);
+        event!(Level::DEBUG, "Processing target file: {:?}", target);
         let file_name = target.file_name().ok_or(InvalidFile)?;
         let source = from.join(file_name);
         
@@ -110,12 +113,18 @@ pub fn distribute<'i, P, I>(
                     .with_context(|| "load source metadata")?
                     .modified()
                     .with_context(|| "load source modified time")?;
-                trace!("Source last modified: {:?}", source_last_modified);
+                event!(
+                    Level::TRACE,
+                    "Source last modified: {:?}",
+                    source_last_modified);
                 let target_last_modified = target.metadata()
                     .with_context(|| "load target metadata")?
                     .modified()
                     .with_context(|| "load target modified time")?;
-                trace!("Target last modified: {:?}", source_last_modified);
+                event!(
+                    Level::TRACE,
+                    "Target last modified: {:?}",
+                    source_last_modified);
 
                 if source_last_modified > target_last_modified {
                     print_status_line(Newer, Copy, &source, &common);

@@ -1,7 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright 2020 Skylor R. Schermer
 // This code is dual licensed using the MIT or Apache 2 license.
 // See license-mit.md and license-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
@@ -17,13 +16,15 @@ mod distribute;
 pub use collect::*;
 pub use distribute::*;
 
+
 // Internal library imports.
-use crate::error::Error;
 use crate::CommonOptions;
 
 // External library imports.
-use log::*;
-
+use anyhow::Error;
+use tracing::event;
+use tracing::Level;
+use tracing::span;
 use colored::Colorize as _;
 use colored::ColoredString;
 
@@ -86,7 +87,7 @@ impl State {
 
 /// Prints the status header.
 pub fn print_status_header() {
-	info!("{}", "    STATE ACTION FILE".bright_white().bold());
+	println!("{}", "    STATE ACTION FILE".bright_white().bold());
 }
 
 /// Prints the status line for a file.
@@ -104,7 +105,7 @@ pub fn print_status_line(
 		}
 	}
 
-	info!("    {}{} {}", 
+	println!("    {}{} {}", 
 		state.colored_string(),
 		action.colored_string(),
 		path.display());
@@ -118,9 +119,11 @@ pub fn print_status_line(
 pub fn copy_file(source: &Path, target: &Path, method: CopyMethod)
 	-> Result<(), Error>
 {
+	let _span = span!(Level::DEBUG, "copy_file").entered();
+
 	use CopyMethod::*;
 	match method {
-		None => trace!("no-run flag was specified: \
+		None => event!(Level::DEBUG, "no-run flag was specified: \
             Not copying data from {:?} to {:?}", source, target),
 
 		Subprocess => {

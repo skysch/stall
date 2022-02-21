@@ -1,6 +1,6 @@
 [package]
 name = "stall"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -23,15 +23,17 @@ default = []
 
 # Required dependencies
 [dependencies]
-rustc_version_runtime = "0.1"
 anyhow = "1.0"
 clap = { version = "3.1", features = ["derive", "suggestions", "color"] }
 colored = { version = "2.0" }
 fcmp = { version = "*", git = "https://github.com/solarretrace/fcmp-rs" }
-fern = { version = "0.6", features = ["colored"] }
-log = { version = "0.4", features = ["serde"] }
-ron = "0.6"
+ron = "0.7"
+rustc_version_runtime = "0.1"
 serde = { version = "1.0", features = ["derive"] }
+tracing = { version = "0.1.31" }
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
 
 # Use local tephra libraries.
 [patch."https://github.com/solarretrace/fcmp-rs"]
@@ -41,6 +43,7 @@ fcmp = { path = "../fcmp-rs/" }
 
 # Dependencies used for tests, examples, and benches.
 [dev-dependencies]
+pretty_assertions = "*"
 
 
 # The development profile, used for `cargo build`
@@ -71,4 +74,6 @@ codegen-units = 1
 incremental = false
 overflow-checks = true
 
+[badges]
+maintenance = { status = "passively-maintained" }
 
