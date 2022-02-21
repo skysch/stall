@@ -86,7 +86,8 @@ impl State {
 }
 
 /// Prints the status header.
-pub fn print_status_header() {
+pub fn print_status_header(common: &CommonOptions) {
+    if common.quiet { return; }
 	println!("{}", "    STATE ACTION FILE".bright_white().bold());
 }
 
@@ -97,6 +98,7 @@ pub fn print_status_line(
 	mut path: &Path,
 	common: &CommonOptions)
 {
+    if common.quiet { return; }
 	if common.short_names {
 		// Fall back to full name if `Path::file_name` method returns `None`.
 		// This should never happen, but there's no reason to fail.

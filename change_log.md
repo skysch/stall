@@ -15,14 +15,14 @@ Implemented changes not yet published.
 + (TODO) Added support for file renaming.
 + (TODO) Added support for directories.
 + (TODO) Show both file states for readability.
++ Added a message to indicate no changes when the stall is empty.
 
 ### Fixed
 + Fixed 'STATE' label for the error-skip case on the distribute command.
 
 ### Updated
 + Replaced structopt with clap 3.1.
-+ Replaced structopt with clap 3.1.
-+ (TODO) Update application framework; replace logging with tracing.
++ Update application framework; replace logging with tracing.
 + (TODO) Use fcmp to compare files.
 
 

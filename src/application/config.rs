@@ -99,7 +99,7 @@ pub struct Config {
 
 
     /// The list of files to apply stall commands to.
-    pub files: Vec<Box<Path>>,
+    pub files: Vec<PathBuf>,
 }
 
 
@@ -280,7 +280,7 @@ impl Config {
             if line.starts_with("#") { continue }
 
             let path: PathBuf = line.into();
-            config.files.push(path.into());
+            config.files.push(path);
         }
 
         Ok(config) 

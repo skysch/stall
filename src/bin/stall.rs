@@ -46,6 +46,7 @@ pub fn main() {
     }
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // main_facade
 ////////////////////////////////////////////////////////////////////////////////
@@ -106,12 +107,12 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
     match command {
         Collect { common, .. } => action::collect(
             stall_dir,
-            config.files.iter().map(|p| &**p),
+            &config.files,
             common),
 
         Distribute { common, .. } => action::distribute(
             stall_dir,
-            config.files.iter().map(|p| &**p),
+            &config.files,
             common),
     }
 }

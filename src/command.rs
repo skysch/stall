@@ -70,22 +70,25 @@ pub struct CommonOptions {
     /// Provides more detailed messages.
     #[clap(
         short = 'v',
-        long = "verbose")]
+        long = "verbose",
+        group = "verbosity")]
     pub verbose: bool,
 
-    /// Silences all program output. This override --verbose if both are provided.
+    /// Silences all program output.
     #[clap(
         short = 'q',
         long = "quiet",
-        alias = "silent")]
+        alias = "silent",
+        group = "verbosity")]
     pub quiet: bool,
 
-    /// Print trace messages. This override --quiet if both are provided.
+    /// Print trace messages.
     #[clap(
         long = "ztrace",
         hide(true))]
     pub trace: bool,
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // CommandOptions

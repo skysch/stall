@@ -74,21 +74,28 @@ use std::path::Path;
 // [0.1.0] Documentation links test.
 // [0.1.0] Style check.
 //
-pub fn collect<'i, P, I>(
+pub fn collect<'f, P, F>(
     into: P,
-    files: I,
+    files: &'f [F],
     common: CommonOptions) 
     -> Result<(), Error>
     where 
         P: AsRef<Path>,
-        I: IntoIterator<Item=&'i Path>
+        F: AsRef<Path>,
 {
     let _span = span!(Level::INFO, "collect").entered();
 
     let into = into.as_ref();
-    println!("{} {}", 
-        "Destination directory:".bright_white(),
-        into.display());
+    if !common.quiet {
+        println!("{} {}", 
+            "Destination directory:".bright_white(),
+            into.display());
+        if files.is_empty() {
+            println!("No files to distribute. Use `add` command to place files \
+                in the stall.");
+            return Ok(());
+        }
+    }
 
     let copy_method = match common.dry_run {
         true  => CopyMethod::None,
@@ -96,9 +103,9 @@ pub fn collect<'i, P, I>(
     };
     event!(Level::DEBUG, "Copy method: {:?}", copy_method);
 
-    print_status_header();
+    print_status_header(&common);
 
-    for source in files {
+    for source in files.iter().map(|f| f.as_ref()) {
         event!(Level::DEBUG, "Processing source file: {:?}", source);
         let file_name = source.file_name().ok_or(InvalidFile)?;
         let target = into.join(file_name);
