@@ -76,9 +76,9 @@ use std::path::Path;
 // [0.1.0] Documentation links test.
 // [0.1.0] Style check.
 //
-pub fn distribute<'f, P>(
-    from: P,
-    data: &Stall,
+pub fn distribute<P>(
+    stall_dir: P,
+    stall: &Stall,
     force: bool,
     common: CommonOptions) 
     -> Result<(), Error>
@@ -87,12 +87,12 @@ pub fn distribute<'f, P>(
 {
     let _span = span!(Level::INFO, "distribute").entered();
 
-    let from = from.as_ref();
+    let stall_dir = stall_dir.as_ref();
     if !common.quiet {
         println!("{} {}", 
             "Source directory:".bright_white(),
-            from.display());
-        if data.is_empty() {
+            stall_dir.display());
+        if stall.is_empty() {
             println!("No files to distribute. Use `add` command to place files \
                 in the stall.");
             return Ok(());
@@ -107,10 +107,10 @@ pub fn distribute<'f, P>(
 
     print_status_header(&common);
 
-    for target in data.entries().map(|e| e.local_path()) {
+    for target in stall.entries().map(|e| e.local) {
         event!(Level::DEBUG, "Processing target file: {:?}", target);
         let file_name = target.file_name().ok_or(InvalidFile)?;
-        let source = from.join(file_name);
+        let source = stall_dir.join(file_name);
         
         use State::*;
         use Action::*;

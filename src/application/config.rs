@@ -57,7 +57,7 @@ pub struct Config {
     #[serde(default = "Config::default_prefs_path")]
     pub prefs_path: PathBuf,
 
-    // TODO: Auto-rename on add
+    // TODO: Stall path
 }
 
 

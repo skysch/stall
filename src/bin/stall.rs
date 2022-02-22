@@ -114,7 +114,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
     };
 
     // Load the prefs file.
-    let mut prefs = match Prefs::read_from_path(&prefs_path) {
+    let prefs = match Prefs::read_from_path(&prefs_path) {
         Err(e) if common.prefs.is_some() => {
             // Path is user-specified, so it is an error to now load it.
             return Err(Error::from(e)).with_context(|| format!(
@@ -127,7 +127,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
             Prefs::new().with_load_path(prefs_path)
         },
 
-        Ok(mut prefs) => {
+        Ok(prefs) => {
             event!(Level::TRACE, "{:#?}", prefs); 
             prefs
         },
@@ -141,7 +141,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
     };
 
     // Load the stall file.
-    let mut stall_data = match Stall::read_from_path(&stall_path) {
+    let stall_data = match Stall::read_from_path(&stall_path) {
         Err(e) if common.stall.is_some() => {
             // Path is user-specified, so it is an error to now load it.
             return Err(Error::from(e)).with_context(|| format!(
@@ -154,7 +154,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
             Stall::new().with_load_path(stall_path)
         },
 
-        Ok(mut stall_data) => {
+        Ok(stall_data) => {
             event!(Level::TRACE, "{:#?}", stall_data); 
             stall_data
         },

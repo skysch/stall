@@ -75,9 +75,9 @@ use std::path::Path;
 // [0.1.0] Documentation links test.
 // [0.1.0] Style check.
 //
-pub fn collect<'f, P>(
-    into: P,
-    data: &Stall,
+pub fn collect<P>(
+    stall_dir: P,
+    stall: &Stall,
     force: bool,
     common: CommonOptions) 
     -> Result<(), Error>
@@ -86,12 +86,12 @@ pub fn collect<'f, P>(
 {
     let _span = span!(Level::INFO, "collect").entered();
 
-    let into = into.as_ref();
+    let stall_dir = stall_dir.as_ref();
     if !common.quiet {
         println!("{} {}", 
             "Destination directory:".bright_white(),
-            into.display());
-        if data.is_empty() {
+            stall_dir.display());
+        if stall.is_empty() {
             println!("No files to distribute. Use `add` command to place files \
                 in the stall.");
             return Ok(());
@@ -106,10 +106,10 @@ pub fn collect<'f, P>(
 
     print_status_header(&common);
 
-    for source in data.entries().map(|e| e.remote_path()) {
+    for source in stall.entries().map(|e| e.remote) {
         event!(Level::DEBUG, "Processing source file: {:?}", source);
         let file_name = source.file_name().ok_or(InvalidFile)?;
-        let target = into.join(file_name);
+        let target = stall_dir.join(file_name);
 
         use State::*;
         use Action::*;

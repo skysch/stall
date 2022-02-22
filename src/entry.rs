@@ -17,6 +17,7 @@ use anyhow::Context as _;
 use anyhow::Error;
 use tracing::event;
 use tracing::Level;
+use bimap::BiHashMap;
 
 // Standard library imports.
 use std::convert::TryInto as _;
@@ -47,8 +48,9 @@ pub struct Stall {
     #[serde(skip)]
     load_status: LoadStatus,
 
-    /// The stall file entries.
-    entries: Vec<Entry>,
+    
+    /// The stall file entries. (Left = Local, Right = Remote)
+    entries: BiHashMap<PathBuf, PathBuf>,
 
 
     // TODO: Auto-rename on add
@@ -65,7 +67,7 @@ impl Stall {
     pub fn new() -> Self {
         Stall {
             load_status: LoadStatus::default(),
-            entries: Vec::new(),
+            entries: BiHashMap::new(),
         }
     }
 
@@ -75,50 +77,55 @@ impl Stall {
     }
 
     /// Returns an iterator over the entries in the stall.
-    pub fn entries(&self) -> impl Iterator<Item=&Entry> {
-        self.entries.iter()
+    pub fn entries(&self) -> impl Iterator<Item=Entry> {
+        self.entries
+            .iter()
+            .map(|(l, r)| Entry {
+                local: l.as_path(),
+                remote: r.as_path(),
+            })
     }
 
-    pub fn add_entry(&mut self, entry: Entry) {
-        let found = self.entries()
-            .position(|e| e.remote_path() == entry.remote_path());
-
-        if found.is_none() {
-            event!(Level::INFO, "Added {entry:?}");
-            self.entries.push(entry);
-        } else {
-            event!(Level::INFO, "Remote already present: {entry:?}");
-        }
+    /// Inserts a new stall entry from a list file parse. Doesn't update the
+    /// load_status of the Stall.
+    fn insert_list_remote(&mut self, remote: PathBuf) {
+        // TODO: Generate the local entry properly.
+        let _ = self.entries.insert(remote.clone(), remote);
     }
 
-    pub fn remove_entry_local(&mut self, name: &Path) -> Option<Entry> {
-        let found = self.entries()
-            .position(|e| e.local_path() == name);
-
-        found.map(|idx| self.entries.swap_remove(idx))
+    /// Adds a new entry to the stall with the given local and remote paths.
+    pub fn insert(&mut self, local: PathBuf, remote: PathBuf) {
+        event!(Level::INFO, "Adding local: {} remote: {}",
+            local.display(),
+            remote.display());
+        self.load_status.set_modified(true);
+        let overwrite = self.entries.insert(local, remote);
+        event!(Level::DEBUG, "Overwrite: {:?}", overwrite);
     }
 
-    pub fn remove_entry_remote(&mut self, name: &Path) -> Option<Entry> {
-        let found = self.entries()
-            .position(|e| e.remote_path() == name);
-
-        found.map(|idx| self.entries.swap_remove(idx))
+    /// Removes an entry from the stall with the given local path, if one
+    /// exists.
+    pub fn remove_local(&mut self, local: &Path)
+        -> Option<(PathBuf, PathBuf)>
+    {
+        event!(Level::INFO, "Removing local: {}", local.display());
+        self.load_status.set_modified(true);
+        let removed = self.entries.remove_by_left(local);
+        event!(Level::DEBUG, "Removed: {:?}", removed);
+        removed
     }
 
-    pub fn entry_mut_local(&mut self, name: &Path) -> Option<&mut Entry> {
-        let found = self.entries()
-            .position(|e| e.local_path() == name);
-
-        found.map(|idx| &mut self.entries[idx])
+    /// Removes an entry from the stall with the given remote path, if one
+    /// exists.
+    pub fn remove_remote(&mut self, remote: &Path)
+        -> Option<(PathBuf, PathBuf)>
+    {
+        event!(Level::INFO, "Removing remote: {}", remote.display());
+        self.load_status.set_modified(true);
+        let removed = self.entries.remove_by_right(remote);
+        event!(Level::DEBUG, "Removed: {:?}", removed);
+        removed
     }
-
-    pub fn entry_mut_remote(&mut self, name: &Path) -> Option<&mut Entry> {
-        let found = self.entries()
-            .position(|e| e.remote_path() == name);
-
-        found.map(|idx| &mut self.entries[idx])
-    }
-
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -277,7 +284,7 @@ impl Stall {
             if line.starts_with("#") { continue }
 
             let path: PathBuf = line.into();
-            stall.entries.push(Entry::from_remote(path));
+            stall.insert_list_remote(path);
         }
 
         Ok(stall) 
@@ -323,37 +330,9 @@ impl Stall {
 ////////////////////////////////////////////////////////////////////////////////
 // Entry
 ////////////////////////////////////////////////////////////////////////////////
-/// A stall file entry
+/// A stall file entry view.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Serialize, Deserialize)]
-pub struct Entry {
-    remote: PathBuf,
-    local: PathBuf,
-}
-
-
-impl Entry {
-    pub fn new(remote: PathBuf, local: PathBuf) -> Self {
-        Entry {
-            remote,
-            local,
-        }
-    }
-
-    pub fn from_remote(remote: PathBuf) -> Self {
-        Entry {
-            local: remote.clone(),
-            remote,
-        }
-    }
-
-    /// Returns the stall entry's associated remote path.
-    pub fn remote_path(&self) -> &Path {
-        self.remote.as_path()
-    }
-
-    /// Returns the stall entry's local path within the stall.
-    pub fn local_path(&self) -> &Path {
-        self.local.as_path()
-    }
+pub struct Entry<'a> {
+    pub local: &'a Path,
+    pub remote: &'a Path,
 }

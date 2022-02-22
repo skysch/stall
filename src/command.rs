@@ -35,7 +35,7 @@ use std::path::PathBuf;
 #[derive(Serialize, Deserialize)]
 #[derive(Parser)]
 pub struct CommonOptions {
-    /// The stall file to use.
+    /// The application configuration file to load.
     #[clap(
         long = "config",
         parse(from_os_str))]
@@ -54,7 +54,7 @@ pub struct CommonOptions {
         parse(from_os_str))]
     pub stall: Option<PathBuf>,
 
-    /// Print copy operations instead of running them.
+    /// Print intended operations instead of running them.
     #[clap(
         short = 'n',
         long = "dry-run")]
@@ -66,20 +66,20 @@ pub struct CommonOptions {
         long = "short-names")]
     pub short_names: bool,
     
-    /// Promote file access warnings into errors.
+    /// Promote any warnings into errors and abort.
     #[clap(
         short = 'e',
         long = "error")]
     pub promote_warnings_to_errors: bool,
     
-    /// Provides more detailed messages.
+    /// Provide more detailed messages.
     #[clap(
         short = 'v',
         long = "verbose",
         group = "verbosity")]
     pub verbose: bool,
 
-    /// Silences all program output.
+    /// Silence all non-error program output.
     #[clap(
         short = 'q',
         long = "quiet",
@@ -115,6 +115,8 @@ pub enum CommandOptions {
     Status {
         #[clap(flatten)]
         common: CommonOptions,
+
+        // TODO: Sort entries.
     },
 
     Add {
@@ -152,7 +154,7 @@ pub enum CommandOptions {
 
         #[clap(parse(from_os_str))]
         to: PathBuf,
-        
+
         // TODO: Overwrite if exists?
     },
 
