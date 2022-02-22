@@ -36,58 +36,13 @@ use std::str::FromStr;
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Format
-////////////////////////////////////////////////////////////////////////////////
-/// The storage format to use for the stall configuration.
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[derive(Serialize, Deserialize)]
-#[derive(clap::ArgEnum)]
-pub enum Format {
-    /// A stall file serialized as a UTF-8 list of files.
-    List,
-    /// A stall file serialized as RON.
-    Ron,
-}
-
-impl FromStr for Format {
-    type Err = FormatParseError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.eq_ignore_ascii_case("list") {
-            Ok(Format::List)
-        } else if s.eq_ignore_ascii_case("ron") {
-            Ok(Format::Ron)
-        } else {
-            Err(FormatParseError)
-        }
-    }
-}
-
-/// An error indicating a failure to parse a [`Format`].
-///
-/// [`Format`]: Format 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct FormatParseError;
-
-impl std::error::Error for FormatParseError {}
-
-impl std::fmt::Display for FormatParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "failure to parse Format")
-    }
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// StallData
+// Stall
 ////////////////////////////////////////////////////////////////////////////////
 /// A stall file entry database.
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct StallData {
+pub struct Stall {
     /// The stall file's load status.
     #[serde(skip)]
     load_status: LoadStatus,
@@ -95,18 +50,16 @@ pub struct StallData {
     entries: Vec<Entry>,
 }
 
-impl Default for StallData {
+impl Default for Stall {
     fn default() -> Self {
-        StallData::new()
+        Stall::new()
     }
 }
 
-impl StallData {
-
-
-    /// Constructs a new `StallData` with no entries.
+impl Stall {
+    /// Constructs a new `Stall` with no entries.
     pub fn new() -> Self {
-        StallData {
+        Stall {
             load_status: LoadStatus::default(),
             entries: Vec::new(),
         }
@@ -134,7 +87,7 @@ impl StallData {
     // File and serialization methods.
     ////////////////////////////////////////////////////////////////////////////
 
-    /// Returns the given `StallData` with the given load path.
+    /// Returns the given `Stall` with the given load path.
     #[must_use]
     pub fn with_load_path<P>(mut self, path: P) -> Self
         where P: AsRef<Path>
@@ -143,31 +96,31 @@ impl StallData {
         self
     }
 
-    /// Returns the `StallData`'s load path.
+    /// Returns the `Stall`'s load path.
     #[must_use]
     pub fn load_path(&self) -> Option<&Path> {
         self.load_status.load_path()
     }
 
-    /// Sets the `StallData`'s load path.
+    /// Sets the `Stall`'s load path.
     pub fn set_load_path<P>(&mut self, path: P)
         where P: AsRef<Path>
     {
         self.load_status.set_load_path(path);
     }
 
-    /// Returns true if the StallData was modified.
+    /// Returns true if the Stall was modified.
     #[must_use]
     pub const fn modified(&self) -> bool {
         self.load_status.modified()
     }
 
-    /// Sets the StallData modification flag.
+    /// Sets the Stall modification flag.
     pub fn set_modified(&mut self, modified: bool) {
         self.load_status.set_modified(modified);
     }
 
-    /// Constructs a new `StallData` with options read from the given file path.
+    /// Constructs a new `Stall` with options read from the given file path.
     pub fn read_from_path<P>(path: P) -> Result<Self, Error> 
         where P: AsRef<Path>
     {
@@ -181,7 +134,7 @@ impl StallData {
         Ok(stall)
     }
 
-    /// Open a file at the given path and write the `StallData` into it.
+    /// Open a file at the given path and write the `Stall` into it.
     pub fn write_to_path<P>(&self, path: P) -> Result<(), Error>
         where P: AsRef<Path>
     {
@@ -199,7 +152,7 @@ impl StallData {
         Ok(())
     }
     
-    /// Create a new file at the given path and write the `StallData` into it.
+    /// Create a new file at the given path and write the `Stall` into it.
     pub fn write_to_path_if_new<P>(&self, path: P) -> Result<(), Error>
         where P: AsRef<Path>
     {
@@ -217,7 +170,7 @@ impl StallData {
         Ok(())
     }
 
-    /// Write the `StallData` into the file is was loaded from. Returns true if the
+    /// Write the `Stall` into the file is was loaded from. Returns true if the
     /// data was written.
     pub fn write_to_load_path(&self) -> Result<bool, Error> {
         match self.load_status.load_path() {
@@ -229,7 +182,7 @@ impl StallData {
         }
     }
 
-    /// Write the `StallData` into a new file using the load path. Returns true
+    /// Write the `Stall` into a new file using the load path. Returns true
     /// if the data was written.
     pub fn write_to_load_path_if_new(&self) -> Result<bool, Error> {
         match self.load_status.load_path() {
@@ -241,7 +194,7 @@ impl StallData {
         }
     }
 
-    /// Constructs a new `StallData` with options parsed from the given file.
+    /// Constructs a new `Stall` with options parsed from the given file.
     pub fn read_from_file(mut file: File) -> Result<Self, Error>  {
         match Self::parse_ron_from_file(&mut file) {
             Ok(stall) => Ok(stall),
@@ -254,7 +207,7 @@ impl StallData {
         }
     }
 
-    /// Parses a `StallData` from a file using the RON format.
+    /// Parses a `Stall` from a file using the RON format.
     fn parse_ron_from_file(file: &mut File) -> Result<Self, Error> {
         let len = file.metadata()
             .context("Failed to recover file metadata.")?
@@ -267,10 +220,10 @@ impl StallData {
     }
 
 
-    /// Parses a `StallData` from a file using a newline-delimited file list
+    /// Parses a `Stall` from a file using a newline-delimited file list
     /// format.
     fn parse_list_from_file(file: &mut File) -> Result<Self, Error> {
-        let mut stall = StallData::default();
+        let mut stall = Stall::default();
         let buf_reader = BufReader::new(file);
         for line in buf_reader.lines() {
             let line = line
@@ -291,7 +244,7 @@ impl StallData {
         Ok(stall) 
     }
 
-    /// Parses a `StallData` from a buffer using the RON format.
+    /// Parses a `Stall` from a buffer using the RON format.
     fn parse_ron_from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         use ron::de::Deserializer;
         let mut d = Deserializer::from_bytes(bytes)
@@ -304,14 +257,14 @@ impl StallData {
         Ok(stall) 
     }
 
-    /// Write the `StallData` into the given file.
+    /// Write the `Stall` into the given file.
     pub fn write_to_file(&self, mut file: File) -> Result<(), Error> {
         self.generate_ron_into_file(&mut file)
     }
 
-    /// Parses a `StallData` from a file using the RON format.
+    /// Parses a `Stall` from a file using the RON format.
     fn generate_ron_into_file(&self, file: &mut File) -> Result<(), Error> {
-        tracing::debug!("Serializing & writing StallData file.");
+        tracing::debug!("Serializing & writing Stall file.");
         let pretty = ron::ser::PrettyConfig::new()
             .depth_limit(2)
             .separate_tuple_members(true)

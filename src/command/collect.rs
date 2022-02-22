@@ -9,7 +9,7 @@
 
 // Internal library imports.
 use crate::CommonOptions;
-use crate::data::StallData;
+use crate::entry::Stall;
 use crate::error::InvalidFile;
 use crate::error::MissingFile;
 use crate::action::Action;
@@ -77,7 +77,8 @@ use std::path::Path;
 //
 pub fn collect<'f, P>(
     into: P,
-    data: &StallData,
+    data: &Stall,
+    force: bool,
     common: CommonOptions) 
     -> Result<(), Error>
     where 
@@ -135,7 +136,7 @@ pub fn collect<'f, P>(
                 if source_last_modified > target_last_modified {
                     print_status_line(Newer, Copy, source, &common);
 
-                } else if common.force {
+                } else if force {
                     print_status_line(Force, Copy, source, &common);
 
                 } else {

@@ -13,15 +13,15 @@ Implemented changes not yet published.
 + (TODO) Added `rm` command.
 + (TODO) Added `status` command.
 + (TODO) Added `init` command.
-+ (TODO) Added support for file renaming.
-+ (TODO) Added support for directories.
++ Added support for file renaming.
 + (TODO) Show both file states for readability.
 + Added a message to indicate no changes when the stall is empty.
 
 ### Fixed
 + Fixed 'STATE' label for the error-skip case on the distribute command.
 
-### Updated
+### Changed
++ Updated command line flags.
 + Replaced structopt with clap 3.1.
 + Update application framework; replace logging with tracing.
 + (TODO) Use fcmp to compare files.

@@ -17,9 +17,6 @@ pub use collect::*;
 pub use distribute::*;
 
 
-// Internal library imports.
-use crate::data::Format;
-
 // External library imports.
 use clap::Parser;
 use serde::Deserialize;
@@ -65,15 +62,9 @@ pub struct CommonOptions {
     
     /// Shorten filenames by omitting path prefixes.
     #[clap(
-        short = 'm',
+        short = 'o',
         long = "short-names")]
     pub short_names: bool,
-
-    /// Force copy even if files are unmodified.
-    #[clap(
-        short = 'f',
-        long = "force")]
-    pub force: bool,
     
     /// Promote file access warnings into errors.
     #[clap(
@@ -114,16 +105,53 @@ pub struct CommonOptions {
 #[derive(Parser)]
 #[clap(name = "stall")]
 pub enum CommandOptions {
+    Init {
+        #[clap(flatten)]
+        common: CommonOptions,
+    },
+
+    Status {
+        #[clap(flatten)]
+        common: CommonOptions,
+    },
+
+    Add {
+        #[clap(flatten)]
+        common: CommonOptions,
+    },
+
+    Remove {
+        #[clap(flatten)]
+        common: CommonOptions,
+    },
+
+    Move {
+        #[clap(flatten)]
+        common: CommonOptions,
+    },
+
     /// Copies files into the stall directory.
     Collect {
         #[clap(flatten)]
         common: CommonOptions,
+
+        /// Force copy even if files are unmodified.
+        #[clap(
+            short = 'f',
+            long = "force")]
+        force: bool,
     },
 
     /// Copies files from the stall directory to their sources.
     Distribute {
         #[clap(flatten)]
         common: CommonOptions,
+
+        /// Force copy even if files are unmodified.
+        #[clap(
+            short = 'f',
+            long = "force")]
+        force: bool,
     },
 }
 
@@ -132,7 +160,12 @@ impl CommandOptions {
     pub fn common(&self) -> &CommonOptions {
         use CommandOptions::*;
         match self {
-            Collect { common, .. } => common,
+            Init { common, .. }       |
+            Status { common, .. }     |
+            Add { common, .. }        |
+            Remove { common, .. }     |
+            Move { common, .. }       |
+            Collect { common, .. }    |
             Distribute { common, .. } => common,
         }
     }

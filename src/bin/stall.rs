@@ -11,7 +11,7 @@
 // Internal library imports.
 use stall::application::Config;
 use stall::application::Prefs;
-use stall::data::StallData;
+use stall::entry::Stall;
 use stall::application::TraceGuard;
 use stall::CommandOptions;
 
@@ -141,7 +141,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
     };
 
     // Load the stall file.
-    let mut stall_data = match StallData::read_from_path(&stall_path) {
+    let mut stall_data = match Stall::read_from_path(&stall_path) {
         Err(e) if common.stall.is_some() => {
             // Path is user-specified, so it is an error to now load it.
             return Err(Error::from(e)).with_context(|| format!(
@@ -151,7 +151,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
         Err(_) => {
             // Path is default, so it is ok to use default stall.
             event!(Level::DEBUG, "Using default stall file.");
-            StallData::new().with_load_path(stall_path)
+            Stall::new().with_load_path(stall_path)
         },
 
         Ok(mut stall_data) => {
@@ -163,14 +163,22 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
     // Dispatch to appropriate commands.
     use CommandOptions::*;
     match command {
-        Collect { common, .. } => stall::collect(
+        Init { common, .. }    |
+        Status { common, .. }  |
+        Add { common, .. }     |
+        Remove { common, .. }  |
+        Move { common, .. }    => todo!(),
+
+        Collect { common, force, .. } => stall::collect(
             stall_dir,
             &stall_data,
+            force,
             common),
 
-        Distribute { common, .. } => stall::distribute(
+        Distribute { common, force, .. } => stall::distribute(
             stall_dir,
             &stall_data,
+            force,
             common),
     }
 }

@@ -11,8 +11,6 @@
 // Internal library imports.
 use crate::application::LoadStatus;
 use crate::application::TraceConfig;
-use crate::data::Format;
-use crate::data::StallData;
 
 // External library imports.
 use anyhow::Context as _;
@@ -81,7 +79,7 @@ impl Config {
 
     /// The default path to look for the stall file.
     ///
-    /// [`StallData`]: crate::application::StallData
+    /// [`Stall`]: crate::application::Stall
     pub const DEFAULT_STALL_PATH: &'static str = ".stall";
 
     /// Constructs a new `Config` with the default options.

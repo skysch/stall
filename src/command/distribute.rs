@@ -15,7 +15,7 @@ use crate::action::print_status_header;
 use crate::action::print_status_line;
 use crate::action::State;
 use crate::CommonOptions;
-use crate::data::StallData;
+use crate::entry::Stall;
 use crate::error::InvalidFile;
 use crate::error::MissingFile;
 
@@ -78,7 +78,8 @@ use std::path::Path;
 //
 pub fn distribute<'f, P>(
     from: P,
-    data: &StallData,
+    data: &Stall,
+    force: bool,
     common: CommonOptions) 
     -> Result<(), Error>
     where 
@@ -136,7 +137,7 @@ pub fn distribute<'f, P>(
                 if source_last_modified > target_last_modified {
                     print_status_line(Newer, Copy, &source, &common);
 
-                } else if common.force {
+                } else if force {
                     print_status_line(Force, Copy, &source, &common);
 
                 } else {

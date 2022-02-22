@@ -45,7 +45,7 @@ pub mod command;
 // Public modules.
 pub mod action;
 pub mod application;
-pub mod data;
+pub mod entry;
 pub mod error;
 
 // Exports.
