@@ -9,6 +9,7 @@
 
 // Internal library imports.
 use crate::CommonOptions;
+use crate::data::StallData;
 use crate::error::InvalidFile;
 use crate::error::MissingFile;
 use crate::action::Action;
@@ -74,14 +75,13 @@ use std::path::Path;
 // [0.1.0] Documentation links test.
 // [0.1.0] Style check.
 //
-pub fn collect<'f, P, F>(
+pub fn collect<'f, P>(
     into: P,
-    files: &'f [F],
+    data: &StallData,
     common: CommonOptions) 
     -> Result<(), Error>
     where 
         P: AsRef<Path>,
-        F: AsRef<Path>,
 {
     let _span = span!(Level::INFO, "collect").entered();
 
@@ -90,7 +90,7 @@ pub fn collect<'f, P, F>(
         println!("{} {}", 
             "Destination directory:".bright_white(),
             into.display());
-        if files.is_empty() {
+        if data.is_empty() {
             println!("No files to distribute. Use `add` command to place files \
                 in the stall.");
             return Ok(());
@@ -105,7 +105,7 @@ pub fn collect<'f, P, F>(
 
     print_status_header(&common);
 
-    for source in files.iter().map(|f| f.as_ref()) {
+    for source in data.entries().map(|e| e.remote_path()) {
         event!(Level::DEBUG, "Processing source file: {:?}", source);
         let file_name = source.file_name().ok_or(InvalidFile)?;
         let target = into.join(file_name);

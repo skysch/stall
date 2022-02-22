@@ -1,104 +1,67 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Stall configuration management utility
+// Atma structured color palette
 ////////////////////////////////////////////////////////////////////////////////
 // This code is dual licensed using the MIT or Apache 2 license.
 // See license-mit.md and license-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
-//! Runtime application configuration.
+//! User preferences.
 ////////////////////////////////////////////////////////////////////////////////
 
 
 // Internal library imports.
+use crate::application::Config;
 use crate::application::LoadStatus;
-use crate::application::TraceConfig;
-use crate::data::Format;
-use crate::data::StallData;
 
 // External library imports.
 use anyhow::Context as _;
 use anyhow::Error;
 use serde::Deserialize;
 use serde::Serialize;
-use tracing::event;
-use tracing::Level;
 
 // Standard library imports.
 use std::convert::TryInto as _;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::BufWriter;
-use std::io::SeekFrom;
-use std::io::BufRead as _;
-use std::io::Seek as _;
-use std::io::BufReader;
 use std::io::Read as _;
 use std::io::Write as _;
 use std::path::Path;
 use std::path::PathBuf;
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
-// Config
+// Prefs
 ////////////////////////////////////////////////////////////////////////////////
-/// Application configuration data. Configures the logger, window, renderer,
-/// application limits, and behaviors.
+/// User preferences.
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Config {
-    /// The Config file's load status.
+pub struct Prefs {
+    /// The Prefs file's load status.
     #[serde(skip)]
     load_status: LoadStatus,
-
-    /// The trace configuration.
-    #[serde(default = "Config::default_trace_config")]
-    pub trace_config: TraceConfig,
-    
-    /// The path for the prefs file.
-    #[serde(default = "Config::default_prefs_path")]
-    pub prefs_path: PathBuf,
 }
 
-
-impl Default for Config {
+impl Default for Prefs {
     fn default() -> Self {
-        Config::new()
+        Self::new()
     }
 }
 
-impl Config {
-    /// The default path to look for the [`Config`] file, relative to the app root.
-    ///
-    /// [`Config`]: crate::application::Config
-    pub const DEFAULT_CONFIG_PATH: &'static str = ".stall-config";
-
-    /// The default path to look for the [`Prefs`] file, relative to the app
-    /// root.
-    ///
-    /// [`Prefs`]: crate::application::Prefs
-    pub const DEFAULT_PREFS_PATH: &'static str = ".stall-preferences";
-
-    /// The default path to look for the stall file.
-    ///
-    /// [`StallData`]: crate::application::StallData
-    pub const DEFAULT_STALL_PATH: &'static str = ".stall";
-
-    /// Constructs a new `Config` with the default options.
+impl Prefs {
+    /// Constructs a new `Prefs` with the default options.
     #[must_use]
     pub fn new() -> Self {
         Self {
             load_status: LoadStatus::default(),
-            trace_config: Self::default_trace_config(),
-            prefs_path: Self::default_prefs_path(),
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////
     // File and serialization methods.
     ////////////////////////////////////////////////////////////////////////////
-
-    /// Returns the given `Config` with the given load path.
+    
+    /// Returns the given `Prefs` with the given load path.
     #[must_use]
     pub fn with_load_path<P>(mut self, path: P) -> Self
         where P: AsRef<Path>
@@ -107,45 +70,47 @@ impl Config {
         self
     }
 
-    /// Returns the `Config`'s load path.
+    /// Returns the `Prefs`'s load path.
     #[must_use]
     pub fn load_path(&self) -> Option<&Path> {
         self.load_status.load_path()
     }
 
-    /// Sets the `Config`'s load path.
+    /// Sets the `Prefs`'s load path.
     pub fn set_load_path<P>(&mut self, path: P)
         where P: AsRef<Path>
     {
         self.load_status.set_load_path(path);
     }
 
-    /// Returns true if the Config was modified.
+    /// Returns true if the Prefs was modified.
     #[must_use]
     pub const fn modified(&self) -> bool {
         self.load_status.modified()
     }
 
-    /// Sets the Config modification flag.
+    /// Sets the Prefs modification flag.
     pub fn set_modified(&mut self, modified: bool) {
         self.load_status.set_modified(modified);
     }
 
-    /// Constructs a new `Config` with options read from the given file path.
+    /// Constructs a new `Prefs` with options read from the given file path.
+    #[tracing::instrument(skip_all, err)]
     pub fn read_from_path<P>(path: P) -> Result<Self, Error> 
         where P: AsRef<Path>
     {
         let path = path.as_ref();
         let file = File::open(path)
             .with_context(|| format!(
-                "Failed to open config file for reading: {}",
+                "Failed to open prefs file for reading: {}",
                 path.display()))?;
-        let mut config = Self::read_from_file(file)?;
-        config.set_load_path(path);
-        Ok(config)
+        let mut prefs = Self::read_from_file(file)?;
+        prefs.set_load_path(path);
+        Ok(prefs)
     }
 
-    /// Open a file at the given path and write the `Config` into it.
+    /// Open a file at the given path and write the `Prefs` into it.
+    #[tracing::instrument(skip_all, err)]
     pub fn write_to_path<P>(&self, path: P) -> Result<(), Error>
         where P: AsRef<Path>
     {
@@ -156,14 +121,15 @@ impl Config {
             .create(true)
             .open(path)
             .with_context(|| format!(
-                "Failed to create/open config file for writing: {}",
+                "Failed to create/open prefs file for writing: {}",
                 path.display()))?;
         self.write_to_file(file)
-            .context("Failed to write config file")?;
+            .context("Failed to write prefs file")?;
         Ok(())
     }
     
-    /// Create a new file at the given path and write the `Config` into it.
+    /// Create a new file at the given path and write the `Prefs` into it.
+    #[tracing::instrument(skip_all, err)]
     pub fn write_to_path_if_new<P>(&self, path: P) -> Result<(), Error>
         where P: AsRef<Path>
     {
@@ -174,15 +140,16 @@ impl Config {
             .create_new(true)
             .open(path)
             .with_context(|| format!(
-                "Failed to create config file: {}",
+                "Failed to create prefs file: {}",
                 path.display()))?;
         self.write_to_file(file)
-            .context("Failed to write config file")?;
+            .context("Failed to write prefs file")?;
         Ok(())
     }
 
-    /// Write the `Config` into the file is was loaded from. Returns true if the
+    /// Write the `Prefs` into the file is was loaded from. Returns true if the
     /// data was written.
+    #[tracing::instrument(skip_all, err)]
     pub fn write_to_load_path(&self) -> Result<bool, Error> {
         match self.load_status.load_path() {
             Some(path) => {
@@ -193,8 +160,9 @@ impl Config {
         }
     }
 
-    /// Write the `Config` into a new file using the load path. Returns true
+    /// Write the `Prefs` into a new file using the load path. Returns true
     /// if the data was written.
+    #[tracing::instrument(skip_all, err)]
     pub fn write_to_load_path_if_new(&self) -> Result<bool, Error> {
         match self.load_status.load_path() {
             Some(path) => {
@@ -205,51 +173,49 @@ impl Config {
         }
     }
 
-    /// Constructs a new `Config` with options parsed from the given file.
+    /// Constructs a new `Prefs` with options parsed from the given file.
+    #[tracing::instrument(skip_all, err)]
     pub fn read_from_file(mut file: File) -> Result<Self, Error>  {
-        let len = file.metadata()
-            .context("Failed to recover file metadata.")?
-            .len();
-        let mut buf = Vec::with_capacity(len.try_into()?);
-        let _ = file.read_to_end(&mut buf)
-            .context("Failed to read config file")?;
-
-        Self::parse_ron_from_bytes(&buf[..])
+        Self::parse_ron_from_file(&mut file)
     }
 
-    /// Parses a `Config` from a file using the RON format.
+    /// Parses a `Prefs` from a file using the RON format.
+    #[tracing::instrument(skip_all, err)]
     fn parse_ron_from_file(file: &mut File) -> Result<Self, Error> {
         let len = file.metadata()
             .context("Failed to recover file metadata.")?
             .len();
         let mut buf = Vec::with_capacity(len.try_into()?);
         let _ = file.read_to_end(&mut buf)
-            .context("Failed to read config file")?;
+            .context("Failed to read prefs file")?;
 
         Self::parse_ron_from_bytes(&buf[..])
     }
 
-    /// Parses a `Config` from a buffer using the RON format.
+    /// Parses a `Prefs` from a buffer using the RON format.
+    #[tracing::instrument(skip_all, err)]
     fn parse_ron_from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         use ron::de::Deserializer;
         let mut d = Deserializer::from_bytes(bytes)
             .context("Failed deserializing RON file")?;
-        let config = Self::deserialize(&mut d)
+        let prefs = Self::deserialize(&mut d)
             .context("Failed parsing RON file")?;
         d.end()
             .context("Failed parsing RON file")?;
 
-        Ok(config) 
+        Ok(prefs)
     }
 
-    /// Write the `Config` into the given file.
+    /// Write the `Prefs` into the given file.
+    #[tracing::instrument(skip_all, err)]
     pub fn write_to_file(&self, mut file: File) -> Result<(), Error> {
         self.generate_ron_into_file(&mut file)
     }
 
-    /// Parses a `Config` from a file using the RON format.
+    /// Parses a `Prefs` from a file using the RON format.
+    #[tracing::instrument(skip_all, err)]
     fn generate_ron_into_file(&self, file: &mut File) -> Result<(), Error> {
-        tracing::debug!("Serializing & writing Config file.");
+        tracing::debug!("Serializing & writing Prefs file.");
         let pretty = ron::ser::PrettyConfig::new()
             .depth_limit(2)
             .separate_tuple_members(true)
@@ -268,36 +234,11 @@ impl Config {
     // Default constructors for serde.
     ////////////////////////////////////////////////////////////////////////////
 
-    /// Returns the default [`TraceConfig`].
-    ///
-    /// [`TraceConfig`]: crate::application::TraceConfig
-    fn default_trace_config() -> TraceConfig {
-        TraceConfig::default()
-    }
-    
-
-    /// Returns the default prefs file path.
-    fn default_prefs_path() -> PathBuf {
-        PathBuf::from(Self::DEFAULT_PREFS_PATH)
-    }
-
 }
 
-impl std::fmt::Display for Config {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(fmt, "\ttrace_config.trace_output_path: {:?}",
-            self.trace_config.trace_output_path)?;
-        writeln!(fmt, "\ttrace_config.ansi_colors: {:?}",
-            self.trace_config.ansi_colors)?;
-        writeln!(fmt, "\ttrace_config.output_stdout: {:?}",
-            self.trace_config.output_stdout)?;
-        writeln!(fmt, "\ttrace_config.filters:")?;
-        for filter in &self.trace_config.filters {
-            writeln!(fmt, "\t\t{:?}", filter)?;
-        }
-        writeln!(fmt, "\tprefs_path: {:?}", 
-            self.prefs_path)?;
-
-        Ok(())
+impl std::fmt::Display for Prefs {
+    fn fmt(&self, _fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())   
     }
 }
+

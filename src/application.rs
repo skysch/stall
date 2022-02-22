@@ -12,9 +12,11 @@
 mod config;
 mod load_status;
 mod trace;
+mod prefs;
 
 
 // Exports.
 pub use config::*;
 pub use load_status::*;
 pub use trace::*;
+pub use prefs::*;

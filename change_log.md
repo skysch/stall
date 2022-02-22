@@ -12,6 +12,7 @@ Implemented changes not yet published.
 + (TODO) Added `add` command.
 + (TODO) Added `rm` command.
 + (TODO) Added `status` command.
++ (TODO) Added `init` command.
 + (TODO) Added support for file renaming.
 + (TODO) Added support for directories.
 + (TODO) Show both file states for readability.

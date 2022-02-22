@@ -8,14 +8,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #![warn(missing_docs)]
 
-// Internal modules.
-mod collect;
-mod distribute;
-
-// Exports.
-pub use collect::*;
-pub use distribute::*;
-
 
 // Internal library imports.
 use crate::CommonOptions;

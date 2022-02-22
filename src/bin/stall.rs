@@ -10,8 +10,9 @@
 
 // Internal library imports.
 use stall::application::Config;
+use stall::application::Prefs;
+use stall::data::StallData;
 use stall::application::TraceGuard;
-use stall::action;
 use stall::CommandOptions;
 
 // External library imports.
@@ -59,8 +60,11 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
     // Find the path for the config file.
     // We do this up front because current_dir might fail due to access
     // problems, and we only want to error out if we really need to use it.
-    let stall_dir = command.stall_dir()?;
-    let config_path = match &common.use_config {
+    let stall_dir = match &common.stall {
+        Some(path) => path.clone(),
+        None       => std::env::current_dir()?,
+    };
+    let config_path = match &common.config {
         Some(path) => path.clone(),
         None       => stall_dir.join(Config::DEFAULT_CONFIG_PATH),
     };
@@ -102,17 +106,71 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
     event!(Level::DEBUG, "{:#?}", command);
     event!(Level::DEBUG, "{:#?}", config);
 
+    // Find the path for the prefs file.
+    let cur_dir = std::env::current_dir()?;
+    let prefs_path = match &common.prefs {
+        Some(path) => path.clone(),
+        None       => cur_dir.join(&config.prefs_path),
+    };
+
+    // Load the prefs file.
+    let mut prefs = match Prefs::read_from_path(&prefs_path) {
+        Err(e) if common.prefs.is_some() => {
+            // Path is user-specified, so it is an error to now load it.
+            return Err(Error::from(e)).with_context(|| format!(
+                "Unable to load prefs file: {:?}", 
+                prefs_path));
+        },
+        Err(_) => {
+            // Path is default, so it is ok to use default prefs.
+            event!(Level::DEBUG, "Using default prefs.");
+            Prefs::new().with_load_path(prefs_path)
+        },
+
+        Ok(mut prefs) => {
+            event!(Level::TRACE, "{:#?}", prefs); 
+            prefs
+        },
+    };
+
+    // Find the path for the stall file.
+    let cur_dir = std::env::current_dir()?;
+    let stall_path = match &common.stall {
+        Some(path) => path.clone(),
+        None       => stall_dir.join(Config::DEFAULT_STALL_PATH),
+    };
+
+    // Load the stall file.
+    let mut stall_data = match StallData::read_from_path(&stall_path) {
+        Err(e) if common.stall.is_some() => {
+            // Path is user-specified, so it is an error to now load it.
+            return Err(Error::from(e)).with_context(|| format!(
+                "Unable to load stall file: {:?}", 
+                stall_path));
+        },
+        Err(_) => {
+            // Path is default, so it is ok to use default stall.
+            event!(Level::DEBUG, "Using default stall file.");
+            StallData::new().with_load_path(stall_path)
+        },
+
+        Ok(mut stall_data) => {
+            event!(Level::TRACE, "{:#?}", stall_data); 
+            stall_data
+        },
+    };
+    
     // Dispatch to appropriate commands.
     use CommandOptions::*;
     match command {
-        Collect { common, .. } => action::collect(
+        Collect { common, .. } => stall::collect(
             stall_dir,
-            &config.files,
+            &stall_data,
             common),
 
-        Distribute { common, .. } => action::distribute(
+        Distribute { common, .. } => stall::distribute(
             stall_dir,
-            &config.files,
+            &stall_data,
             common),
     }
 }

@@ -40,11 +40,12 @@
 
 
 // Internal modules.
-mod command;
+pub mod command;
 
 // Public modules.
-pub mod application;
 pub mod action;
+pub mod application;
+pub mod data;
 pub mod error;
 
 // Exports.

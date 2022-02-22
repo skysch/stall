@@ -1,15 +1,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Stall configuration management utility
 ////////////////////////////////////////////////////////////////////////////////
-// This code is dual licenced using the MIT or Apache 2 license.
-// See licence-mit.md and licence-apache.md for details.
+// This code is dual licensed using the MIT or Apache 2 license.
+// See license-mit.md and license-apache.md for details.
 ////////////////////////////////////////////////////////////////////////////////
-//! Command line interface options.
+//! Command options and dispatch.
 ////////////////////////////////////////////////////////////////////////////////
+#![warn(missing_docs)]
+
+// Internal modules.
+mod collect;
+mod distribute;
+
+// Exports.
+pub use collect::*;
+pub use distribute::*;
 
 
 // Internal library imports.
-use crate::application::ConfigFormat;
+use crate::data::Format;
 
 // External library imports.
 use clap::Parser;
@@ -18,6 +27,7 @@ use serde::Serialize;
 
 // Standard library imports.
 use std::path::PathBuf;
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -30,18 +40,22 @@ use std::path::PathBuf;
 pub struct CommonOptions {
     /// The stall file to use.
     #[clap(
-        short = 'u',
-        long = "use-config",
+        long = "config",
         parse(from_os_str))]
-    pub use_config: Option<PathBuf>,
+    pub config: Option<PathBuf>,
 
-    /// The format of the stall file.
+    /// The user preferences file to load.
     #[clap(
-        short = 'c',
-        long = "config-format",
-        default_value = "list",
-        arg_enum)]
-    pub config_format: ConfigFormat,
+        long = "prefs",
+        parse(from_os_str))]
+    pub prefs: Option<PathBuf>,
+
+    /// The stall file to load.
+    #[clap(
+        short = 's',
+        long = "stall",
+        parse(from_os_str))]
+    pub stall: Option<PathBuf>,
 
     /// Print copy operations instead of running them.
     #[clap(
@@ -51,7 +65,7 @@ pub struct CommonOptions {
     
     /// Shorten filenames by omitting path prefixes.
     #[clap(
-        short = 's',
+        short = 'm',
         long = "short-names")]
     pub short_names: bool,
 
@@ -102,24 +116,12 @@ pub struct CommonOptions {
 pub enum CommandOptions {
     /// Copies files into the stall directory.
     Collect {
-        /// The stall directory to copy into. Default is the current directory.
-        #[clap(
-            long = "into",
-            parse(from_os_str))]
-        into: Option<PathBuf>,
-
         #[clap(flatten)]
         common: CommonOptions,
     },
 
     /// Copies files from the stall directory to their sources.
     Distribute {
-        /// The stall directory to copy from. Default is the current directory.
-        #[clap(
-            long = "from",
-            parse(from_os_str))]
-        from: Option<PathBuf>,
-
         #[clap(flatten)]
         common: CommonOptions,
     },
@@ -132,21 +134,6 @@ impl CommandOptions {
         match self {
             Collect { common, .. } => common,
             Distribute { common, .. } => common,
-        }
-    }
-
-    /// Returns the stall directory.
-    pub fn stall_dir(&self) -> Result<PathBuf, std::io::Error> {
-        use CommandOptions::*;
-        match &self {
-            Collect { into, .. } => match into {
-                Some(path) => Ok(path.clone()),
-                None       => std::env::current_dir(),
-            },
-            Distribute { from, .. } => match from {
-                Some(path) => Ok(path.clone()),
-                None       => std::env::current_dir(),
-            }
         }
     }
 }
