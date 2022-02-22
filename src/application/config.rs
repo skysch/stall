@@ -17,18 +17,12 @@ use anyhow::Context as _;
 use anyhow::Error;
 use serde::Deserialize;
 use serde::Serialize;
-use tracing::event;
-use tracing::Level;
 
 // Standard library imports.
 use std::convert::TryInto as _;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::BufWriter;
-use std::io::SeekFrom;
-use std::io::BufRead as _;
-use std::io::Seek as _;
-use std::io::BufReader;
 use std::io::Read as _;
 use std::io::Write as _;
 use std::path::Path;
@@ -207,14 +201,7 @@ impl Config {
 
     /// Constructs a new `Config` with options parsed from the given file.
     pub fn read_from_file(mut file: File) -> Result<Self, Error>  {
-        let len = file.metadata()
-            .context("Failed to recover file metadata.")?
-            .len();
-        let mut buf = Vec::with_capacity(len.try_into()?);
-        let _ = file.read_to_end(&mut buf)
-            .context("Failed to read config file")?;
-
-        Self::parse_ron_from_bytes(&buf[..])
+        Self::parse_ron_from_file(&mut file)
     }
 
     /// Parses a `Config` from a file using the RON format.

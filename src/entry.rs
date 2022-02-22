@@ -32,7 +32,6 @@ use std::io::Read as _;
 use std::io::Write as _;
 use std::path::Path;
 use std::path::PathBuf;
-use std::str::FromStr;
 
 
 
@@ -77,7 +76,7 @@ impl Stall {
     }
 
     /// Returns an iterator over the entries in the stall.
-    pub fn entries(&self) -> impl Iterator<Item=Entry> {
+    pub fn entries<'a>(&'a self) -> impl Iterator<Item=Entry<'a>> {
         self.entries
             .iter()
             .map(|(l, r)| Entry {
@@ -333,6 +332,8 @@ impl Stall {
 /// A stall file entry view.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entry<'a> {
+    /// The local path of a stall entry.
     pub local: &'a Path,
+    /// The remote path of a stall entry.
     pub remote: &'a Path,
 }

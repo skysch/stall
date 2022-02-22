@@ -9,7 +9,6 @@
 
 
 // Internal library imports.
-use crate::application::Config;
 use crate::application::LoadStatus;
 
 // External library imports.
@@ -26,7 +25,6 @@ use std::io::BufWriter;
 use std::io::Read as _;
 use std::io::Write as _;
 use std::path::Path;
-use std::path::PathBuf;
 
 
 ////////////////////////////////////////////////////////////////////////////////
