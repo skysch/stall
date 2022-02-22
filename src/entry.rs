@@ -47,7 +47,11 @@ pub struct Stall {
     #[serde(skip)]
     load_status: LoadStatus,
 
+    /// The stall file entries.
     entries: Vec<Entry>,
+
+
+    // TODO: Auto-rename on add
 }
 
 impl Default for Stall {
@@ -75,12 +79,46 @@ impl Stall {
         self.entries.iter()
     }
 
-    // pub fn add_entry(&mut self, entry: Entry) {}
-    // pub fn remove_entry_local(&mut self, name: &Path) -> Entry {}
-    // pub fn remove_entry_remote(&mut self, name: &Path) -> Entry {}
-    // pub fn move_entry(&mut self, name: &Path) {}
-    // pub fn entry_mut_local(&mut self, name: &Path) -> &mut Entry {}
-    // pub fn entry_mut_remote(&mut self, name: &Path) -> &mut Entry {}
+    pub fn add_entry(&mut self, entry: Entry) {
+        let found = self.entries()
+            .position(|e| e.remote_path() == entry.remote_path());
+
+        if found.is_none() {
+            event!(Level::INFO, "Added {entry:?}");
+            self.entries.push(entry);
+        } else {
+            event!(Level::INFO, "Remote already present: {entry:?}");
+        }
+    }
+
+    pub fn remove_entry_local(&mut self, name: &Path) -> Option<Entry> {
+        let found = self.entries()
+            .position(|e| e.local_path() == name);
+
+        found.map(|idx| self.entries.swap_remove(idx))
+    }
+
+    pub fn remove_entry_remote(&mut self, name: &Path) -> Option<Entry> {
+        let found = self.entries()
+            .position(|e| e.remote_path() == name);
+
+        found.map(|idx| self.entries.swap_remove(idx))
+    }
+
+    pub fn entry_mut_local(&mut self, name: &Path) -> Option<&mut Entry> {
+        let found = self.entries()
+            .position(|e| e.local_path() == name);
+
+        found.map(|idx| &mut self.entries[idx])
+    }
+
+    pub fn entry_mut_remote(&mut self, name: &Path) -> Option<&mut Entry> {
+        let found = self.entries()
+            .position(|e| e.remote_path() == name);
+
+        found.map(|idx| &mut self.entries[idx])
+    }
+
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -145,7 +183,7 @@ impl Stall {
             .create(true)
             .open(path)
             .with_context(|| format!(
-                "Failed to create/open stall file for writing: {}",
+                "Failed to open stall file for writing: {}",
                 path.display()))?;
         self.write_to_file(file)
             .context("Failed to write stall file")?;
@@ -196,6 +234,7 @@ impl Stall {
 
     /// Constructs a new `Stall` with options parsed from the given file.
     pub fn read_from_file(mut file: File) -> Result<Self, Error>  {
+        // TODO: Consider returning RON error.
         match Self::parse_ron_from_file(&mut file) {
             Ok(stall) => Ok(stall),
             Err(e)     => {
@@ -278,7 +317,6 @@ impl Stall {
         writer.flush()
             .context("Failed to flush file buffer")
     }
-
 }
 
 
@@ -286,7 +324,7 @@ impl Stall {
 // Entry
 ////////////////////////////////////////////////////////////////////////////////
 /// A stall file entry
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[derive(Serialize, Deserialize)]
 pub struct Entry {
     remote: PathBuf,

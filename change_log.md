@@ -13,6 +13,7 @@ Implemented changes not yet published.
 + (TODO) Added `rm` command.
 + (TODO) Added `status` command.
 + (TODO) Added `init` command.
++ (TODO) Added `mv` command.
 + Added support for file renaming.
 + (TODO) Show both file states for readability.
 + Added a message to indicate no changes when the stall is empty.

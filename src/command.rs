@@ -108,6 +108,8 @@ pub enum CommandOptions {
     Init {
         #[clap(flatten)]
         common: CommonOptions,
+
+        // TODO: Set rename policy
     },
 
     Status {
@@ -118,16 +120,40 @@ pub enum CommandOptions {
     Add {
         #[clap(flatten)]
         common: CommonOptions,
+
+        #[clap(parse(from_os_str))]
+        file: PathBuf,
+
+        // TODO: Overwrite if exists?
+        // TODO: Immediate collect?
+        // TODO: Add rename?
+        // TODO: Rename if exists?
+        // TODO: multiple?
     },
 
     Remove {
         #[clap(flatten)]
         common: CommonOptions,
+
+        #[clap(parse(from_os_str))]
+        file: PathBuf,
+
+        // TODO: Delete local copy?
+        // TODO: match local name?
+        // TODO: multiple?
     },
 
     Move {
         #[clap(flatten)]
         common: CommonOptions,
+
+        #[clap(parse(from_os_str))]
+        from: PathBuf,
+
+        #[clap(parse(from_os_str))]
+        to: PathBuf,
+        
+        // TODO: Overwrite if exists?
     },
 
     /// Copies files into the stall directory.
