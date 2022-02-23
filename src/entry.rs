@@ -9,13 +9,14 @@
 
 // Internal library imports.
 use crate::application::LoadStatus;
+use crate::command::CommonOptions;
 
 // External library imports.
 use anyhow::Context as _;
 use anyhow::Error;
 use bimap::BiHashMap;
-use fcmp::MissingFileBehavior;
-use fcmp::partial_cmp_paths;
+use colored::Colorize as _;
+use fcmp::FileCmp;
 use serde::Deserialize;
 use serde::Serialize;
 use tracing::event;
@@ -31,23 +32,11 @@ use std::io::BufRead as _;
 use std::io::Seek as _;
 use std::io::BufReader;
 use std::io::Read as _;
-use std::io::Write as _;
+use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
 
-
-
-/// Returns a short name of a path for simplified display.
-fn short_name(path: &Path) -> &Path {
-	// Fall back to full name if `Path::file_name` method returns `None`.
-	// This should never happen, but there's no reason to fail.
-	if let Some(name) = path.file_name() {
-		name.as_ref()
-	} else {
-		path
-	}
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -69,21 +58,27 @@ pub struct Stall {
 	// TODO: Auto-rename on add
 }
 
-impl Default for Stall {
-	fn default() -> Self {
-		Stall::new()
-	}
-}
-
 impl Stall {
-	/// Constructs a new `Stall` with no entries.
-	pub fn new() -> Self {
+	/// Constructs a new `Stall` with the given load path.
+	pub fn new<P>(path: P) -> Self
+		where P: AsRef<Path>
+	{
+		Stall {
+			load_status: LoadStatus::default()
+				.with_load_path(path),
+			entries: BiHashMap::new(),
+		}
+	}
+
+	/// Constructs a new `Stall` without a load path.
+	fn new_detached() -> Self {
 		Stall {
 			load_status: LoadStatus::default(),
 			entries: BiHashMap::new(),
 		}
 	}
 
+	
 	/// Returns `true` if there are no entries in the stall.
 	pub fn is_empty(&self) -> bool {
 		self.entries.is_empty()
@@ -114,10 +109,18 @@ impl Stall {
 	}
 
 	/// Adds a new entry to the stall with the given local and remote paths.
+	///
+    /// ### Panics
+    ///
+    /// Panics if either of the given paths do not have a valid file name (e.g.,
+    /// `/` or `/abc/..`.)
 	pub fn insert(&mut self, local: PathBuf, remote: PathBuf) {
 		event!(Level::INFO, "Adding local: {} remote: {}",
 			local.display(),
 			remote.display());
+		assert!(local.file_name().is_some());
+		assert!(remote.file_name().is_some());
+
 		self.load_status.set_modified(true);
 		let overwrite = self.entries.insert(local, remote);
 		event!(Level::DEBUG, "Overwrite: {:?}", overwrite);
@@ -149,9 +152,15 @@ impl Stall {
 
 	/// Inserts a new stall entry from a list file parse. Doesn't update the
 	/// load_status of the Stall.
+	///
+    /// ### Panics
+    ///
+    /// Panics if the given path does not have a valid file name (e.g., `/` or
+    /// `/abc/..`.)
 	fn insert_list_remote(&mut self, remote: PathBuf) {
-		// TODO: Generate the local entry properly.
-		let _ = self.entries.insert(remote.clone(), remote);
+		let local = remote.file_name().expect("invalid stall file_name");
+
+		let _ = self.entries.insert(local.into(), remote);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -295,7 +304,7 @@ impl Stall {
 	/// Parses a `Stall` from a file using a newline-delimited file list
 	/// format.
 	fn parse_list_from_file(file: &mut File) -> Result<Self, Error> {
-		let mut stall = Stall::default();
+		let mut stall = Stall::new_detached();
 		let buf_reader = BufReader::new(file);
 		for line in buf_reader.lines() {
 			let line = line
@@ -367,23 +376,154 @@ pub struct Entry<'a> {
 
 
 impl<'a> Entry<'a> {
-	/// Returns the partial ordering of the local and remote paths.
-	///
-	/// ### Errors
-	///
-	/// Returns an error if the file exists but cannot be read.
-	pub fn ordering(&self) -> Result<Option<std::cmp::Ordering>, Error> {
-		partial_cmp_paths(
-			self.local,
-			self.remote,
-			false, // diff
-			MissingFileBehavior::Oldest)
+
+	fn status(&self, stall_dir: &Path) -> (EntryStatus, EntryStatus) {
+		use EntryStatus::*;
+		use std::cmp::Ordering::*;
+
+		let mut full_local = stall_dir.to_path_buf();
+		full_local.push(self.local);
+
+		let file_cmp_l = FileCmp::try_from(full_local.as_path());
+		let file_cmp_r = FileCmp::try_from(self.remote);
+
+		match (file_cmp_l, file_cmp_r) {
+			(Err(_), Err(_))                 => (Error, Error),
+			(Err(_), Ok(f)) if !f.is_found() => (Error, Absent),
+			(Err(_), Ok(_))                  => (Error, Exists),
+			(Ok(f), Err(_)) if !f.is_found() => (Absent, Error),
+			(Ok(_), Err(_))                  => (Exists, Error),
+
+			(Ok(l), Ok(r)) => match (l.is_found(), r.is_found()) {
+				(false, false) => (Absent, Absent),
+				(true, false)  => (Exists, Absent),
+				(false, true)  => (Absent, Exists),
+				(true, true) => match l.partial_cmp(&r, false) {
+					Some(Less)    => (Newer, Older),
+					Some(Equal)   => (Same,  Same),
+					Some(Greater) => (Older, Newer),
+					None          => (Error, Error),
+				},
+			}
+		}
 	}
 
-	// pub(in crate) fn write_status_header(common: &CommonOptions) {}
-	// pub(in crate) fn write_status_line(&self, common: &CommonOptions) {}
+	pub(in crate) fn write_status_header(
+		out: &mut dyn Write,
+		common: &CommonOptions)
+		-> std::io::Result<()>
+	{
+		if common.quiet { return Ok(()); }
+
+		if common.color.enabled() {
+			writeln!(out, "    {:<6} {:<6} {}", 
+				"LOCAL".bright_white().bold(),
+				"REMOTE".bright_white().bold(),
+				"FILE".bright_white().bold())
+		} else {
+			writeln!(out, "    LOCAL REMOTE FILE")
+		}
+	}
+
+	pub(in crate) fn write_status(
+		&self,
+		out: &mut dyn Write,
+		stall_dir: &Path,
+		common: &CommonOptions)
+		-> std::io::Result<()>
+	{
+		if common.quiet { return Ok(()); }
+		let (status_l, status_r) = self.status(stall_dir);
+
+		write!(out, "    ")?;
+		status_l.write(out, common)?;
+		write!(out, " ")?;
+		status_r.write(out, common)?;
+		write!(out, " ")?;
+		self.write_path(out, common)?;
+		writeln!(out)
+	}
+
+	fn write_path(
+		&self,
+		out: &mut dyn Write,
+		common: &CommonOptions)
+		-> std::io::Result<()>
+	{
+		if common.quiet { return Ok(()); }
+
+		write!(out, "{}", self.local.display())?;
+		
+		if common.short_names {
+			// Check if file is renamed.
+			let remote_name: &Path = self.remote.file_name()
+				.expect("get remote file name")
+				.as_ref();
+
+			if self.local != remote_name {
+				write!(out, " ({})", remote_name.display())?;
+			}
+		} else {
+			write!(out, " ({})", self.remote.display())?;
+		}
+
+		Ok(())
+	}
+
 	// pub(in crate) fn collect(&self, common: &CommonOptions) {}
 	// pub(in crate) fn distribute(&self, common: &CommonOptions) {}
 }
 
 
+
+/// The entry status.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum EntryStatus {
+	/// The file is unreadable, or its modification time could not be compared.
+	Error,
+	/// The entry file was found, but its counterpart was not.
+	Absent,
+	/// The entry file was found, but its counterpart was not.
+	Exists,
+	/// The entry file is newer than the counterpart.
+	Newer,
+	/// The entry file is older than the counterpart.
+	Older,
+	/// The entry file is older than the counterpart, but the copy is forced.
+	Force,
+	/// The entry file is the same as the counterpart.
+	Same,
+}
+
+impl EntryStatus {
+	fn write(
+		&self,
+		out: &mut dyn Write,
+		common: &CommonOptions)
+		-> std::io::Result<()>
+	{
+		if common.quiet { return Ok(()); }
+
+		if common.color.enabled() {
+			write!(out, "{:<6}", match self {
+				EntryStatus::Error  => "error".bright_red(),
+				EntryStatus::Absent => "absent".bright_yellow(),
+				EntryStatus::Exists => "exists".bright_green(),
+				EntryStatus::Newer  => "newer".bright_green(),
+				EntryStatus::Older  => "older".bright_yellow(),
+				EntryStatus::Force  => "force".bright_green(),
+				EntryStatus::Same   => "same".bright_white(),
+			})
+		} else {
+			write!(out, "{:<6}", match self {
+				EntryStatus::Error  => "error",
+				EntryStatus::Absent => "absent",
+				EntryStatus::Exists => "exists",
+				EntryStatus::Newer  => "newer",
+				EntryStatus::Older  => "older",
+				EntryStatus::Force  => "force",
+				EntryStatus::Same   => "same",
+			})
+		}
+	}
+}

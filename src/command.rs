@@ -9,12 +9,22 @@
 #![warn(missing_docs)]
 
 // Internal modules.
+mod add;
 mod collect;
 mod distribute;
+mod init;
+mod remove;
+mod rename;
+mod status;
 
 // Exports.
+pub use add::*;
 pub use collect::*;
 pub use distribute::*;
+pub use init::*;
+pub use remove::*;
+pub use rename::*;
+pub use status::*;
 
 
 // External library imports.

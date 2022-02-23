@@ -33,7 +33,7 @@ use std::path::Path;
 ////////////////////////////////////////////////////////////////////////////////
 // collect
 ////////////////////////////////////////////////////////////////////////////////
-/// Executes the 'stall collect' command.
+/// Executes the 'stall-collect' command.
 ///
 /// This will iterate over each file, checking if it is more recent than its
 /// counterpart in the stall directory by comparing their modification times.
@@ -70,11 +70,6 @@ use std::path::Path;
 /// [`CommonOptions`]: ../command/struct.CommonOptions.html
 /// [`Error`]: ../error/struct.Error.html
 /// 
-// Release checklist:
-// [0.1.0] Documentation accuracy check.
-// [0.1.0] Documentation links test.
-// [0.1.0] Style check.
-//
 pub fn collect<P>(
 	stall_dir: P,
 	stall: &Stall,

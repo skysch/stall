@@ -151,7 +151,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 		Err(_) => {
 			// Path is default, so it is ok to use default stall.
 			event!(Level::DEBUG, "Using default stall file.");
-			Stall::new().with_load_path(stall_path)
+			Stall::new(stall_path)
 		},
 
 		Ok(stall_data) => {
@@ -163,8 +163,13 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	// Dispatch to appropriate commands.
 	use CommandOptions::*;
 	match command {
-		Init { common, .. }    |
-		Status { common, .. }  |
+		Init { common, .. }    => todo!(),
+		
+		Status { common, .. }  => stall::status(
+			stall_dir,
+			&stall_data,
+			common),
+
 		Add { common, .. }     |
 		Remove { common, .. }  |
 		Move { common, .. }    => todo!(),

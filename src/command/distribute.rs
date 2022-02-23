@@ -34,7 +34,7 @@ use std::path::Path;
 ////////////////////////////////////////////////////////////////////////////////
 // distribute
 ////////////////////////////////////////////////////////////////////////////////
-/// Executes the 'stall distribute' command.
+/// Executes the 'stall-distribute' command.
 ///
 /// This will iterate over each file, checking if it is more recent than its
 /// counterpart in the stall directory by comparing their modification times.
@@ -71,11 +71,6 @@ use std::path::Path;
 /// [`CommonOptions`]: ../command/struct.CommonOptions.html
 /// [`Error`]: ../error/struct.Error.html
 /// 
-// Release checklist:
-// [0.1.0] Documentation accuracy check.
-// [0.1.0] Documentation links test.
-// [0.1.0] Style check.
-//
 pub fn distribute<P>(
 	stall_dir: P,
 	stall: &Stall,
