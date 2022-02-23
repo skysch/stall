@@ -384,8 +384,14 @@ impl<'a> Entry<'a> {
 		let mut full_local = stall_dir.to_path_buf();
 		full_local.push(self.local);
 
-		let file_cmp_l = FileCmp::try_from(full_local.as_path());
-		let file_cmp_r = FileCmp::try_from(self.remote);
+		let file_cmp_l = FileCmp::try_from(full_local.as_path())
+			.map_err(|e| event!(Level::DEBUG, "{e}: {:?}",
+				full_local.as_path()));
+		let file_cmp_r = FileCmp::try_from(self.remote)
+			.map_err(|e| event!(Level::DEBUG, "{e}: {:?}", self.remote));
+
+		event!(Level::TRACE, "LOCAL {:?}", file_cmp_l);
+		event!(Level::TRACE, "REMOTE {:?}", file_cmp_r);
 
 		match (file_cmp_l, file_cmp_r) {
 			(Err(_), Err(_))                 => (Error, Error),
@@ -417,11 +423,14 @@ impl<'a> Entry<'a> {
 
 		if common.color.enabled() {
 			writeln!(out, "    {:<6} {:<6} {}", 
-				"LOCAL".bright_white().bold(),
 				"REMOTE".bright_white().bold(),
+				"LOCAL".bright_white().bold(),
 				"FILE".bright_white().bold())
 		} else {
-			writeln!(out, "    LOCAL REMOTE FILE")
+			writeln!(out, "    {:<6} {:<6} {}", 
+				"REMOTE",
+				"LOCAL",
+				"FILE")
 		}
 	}
 
@@ -436,9 +445,9 @@ impl<'a> Entry<'a> {
 		let (status_l, status_r) = self.status(stall_dir);
 
 		write!(out, "    ")?;
-		status_l.write(out, common)?;
-		write!(out, " ")?;
 		status_r.write(out, common)?;
+		write!(out, " ")?;
+		status_l.write(out, common)?;
 		write!(out, " ")?;
 		self.write_path(out, common)?;
 		writeln!(out)

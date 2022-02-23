@@ -18,6 +18,7 @@ use stall::CommandOptions;
 // External library imports.
 use anyhow::Context;
 use anyhow::Error;
+use anyhow::anyhow;
 use clap::Parser;
 use tracing::event;
 use tracing::Level;
@@ -60,9 +61,23 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	// Find the path for the config file.
 	// We do this up front because current_dir might fail due to access
 	// problems, and we only want to error out if we really need to use it.
-	let stall_dir = match &common.stall {
+	let cur_dir = std::env::current_dir()?;
+	let stall_path = match &common.stall {
 		Some(path) => path.clone(),
-		None       => std::env::current_dir()?,
+		None       => cur_dir.join(Config::DEFAULT_STALL_PATH),
+	};
+	if !stall_path.is_file() {
+		return Err(anyhow!("stall path is not a file: {}",
+			stall_path.display()));
+	}
+	let stall_dir = match &common.stall {
+		Some(path) => stall_path
+			.parent()
+			.ok_or_else(|| anyhow!(
+				"unable to determine stall parent directory: {}",
+				stall_path.display()))?
+			.to_path_buf(),
+		None       => cur_dir,
 	};
 	let config_path = match &common.config {
 		Some(path) => path.clone(),
@@ -93,12 +108,10 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 
 	// Print version information.
 	event!(Level::INFO, "Atma version: {}", env!("CARGO_PKG_VERSION"));
-	#[cfg(feature = "png")]
-	event!(Level::INFO, "PNG support enabled.");
-	#[cfg(feature = "termsize")]
-	event!(Level::INFO, "Terminal size detection support enabled.");
 	let rustc_meta = rustc_version_runtime::version_meta();
-	event!(Level::DEBUG, "Rustc version: {} {:?}", rustc_meta.semver, rustc_meta.channel);
+	event!(Level::DEBUG, "Rustc version: {} {:?}",
+		rustc_meta.semver,
+		rustc_meta.channel);
 	if let Some(hash) = rustc_meta.commit_hash {
 		event!(Level::DEBUG, "Rustc git commit: {}", hash);
 	}
