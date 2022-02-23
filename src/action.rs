@@ -123,14 +123,14 @@ pub fn copy_file(source: &Path, target: &Path, method: CopyMethod)
 		Subprocess => {
 			let status = if cfg!(target_os = "windows") {
 				std::process::Command::new("COPY")
-						.arg(source)
-						.arg(target)
-						.status()
+					.arg(source)
+					.arg(target)
+					.status()
 			} else {
 				std::process::Command::new("cp")
-						.arg(source)
-						.arg(target)
-						.status()
+					.arg(source)
+					.arg(target)
+					.status()
 			};
 			let _ = status.expect("execute copy command");
 		},
