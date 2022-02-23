@@ -53,30 +53,30 @@
 // [0.1.0] Style check.
 //
 pub fn status<P>(
-    stall_dir: P,
-    data: &Stall,
-    common: CommonOptions) 
-    -> Result<(), Error>
-    where 
-        P: AsRef<Path>,
+	stall_dir: P,
+	data: &Stall,
+	common: CommonOptions) 
+	-> Result<(), Error>
+	where 
+		P: AsRef<Path>,
 {
-    let _span = span!(Level::INFO, "status").entered();
+	let _span = span!(Level::INFO, "status").entered();
 
-    let into = into.as_ref();
-    if !common.quiet {
-        if data.is_empty() {
-            println!("No files to distribute. Use `add` command to place files \
-                in the stall.");
-            return Ok(());
-        }
-    } else {
-        // Nothing to do if asking for status with --quiet.
-        return Ok(());
-    }
+	let into = into.as_ref();
+	if !common.quiet {
+		if data.is_empty() {
+			println!("No files to distribute. Use `add` command to place files \
+				in the stall.");
+			return Ok(());
+		}
+	} else {
+		// Nothing to do if asking for status with --quiet.
+		return Ok(());
+	}
 
-    for entry in data.entries() {
+	for entry in data.entries() {
 
-    }
+	}
 
-    Ok(())
+	Ok(())
 }

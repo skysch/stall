@@ -35,63 +35,63 @@ use std::path::PathBuf;
 #[derive(Serialize, Deserialize)]
 #[derive(Parser)]
 pub struct CommonOptions {
-    /// The application configuration file to load.
-    #[clap(
-        long = "config",
-        parse(from_os_str))]
-    pub config: Option<PathBuf>,
+	/// The application configuration file to load.
+	#[clap(
+		long = "config",
+		parse(from_os_str))]
+	pub config: Option<PathBuf>,
 
-    /// The user preferences file to load.
-    #[clap(
-        long = "prefs",
-        parse(from_os_str))]
-    pub prefs: Option<PathBuf>,
+	/// The user preferences file to load.
+	#[clap(
+		long = "prefs",
+		parse(from_os_str))]
+	pub prefs: Option<PathBuf>,
 
-    /// The stall file to load.
-    #[clap(
-        short = 's',
-        long = "stall",
-        parse(from_os_str))]
-    pub stall: Option<PathBuf>,
+	/// The stall file to load.
+	#[clap(
+		short = 's',
+		long = "stall",
+		parse(from_os_str))]
+	pub stall: Option<PathBuf>,
 
-    /// Print intended operations instead of running them.
-    #[clap(
-        short = 'n',
-        long = "dry-run")]
-    pub dry_run: bool,
-    
-    /// Shorten filenames by omitting path prefixes.
-    #[clap(
-        short = 'o',
-        long = "short-names")]
-    pub short_names: bool,
-    
-    /// Promote any warnings into errors and abort.
-    #[clap(
-        short = 'e',
-        long = "error")]
-    pub promote_warnings_to_errors: bool,
-    
-    /// Provide more detailed messages.
-    #[clap(
-        short = 'v',
-        long = "verbose",
-        group = "verbosity")]
-    pub verbose: bool,
+	/// Print intended operations instead of running them.
+	#[clap(
+		short = 'n',
+		long = "dry-run")]
+	pub dry_run: bool,
+	
+	/// Shorten filenames by omitting path prefixes.
+	#[clap(
+		short = 'o',
+		long = "short-names")]
+	pub short_names: bool,
+	
+	/// Promote any warnings into errors and abort.
+	#[clap(
+		short = 'e',
+		long = "error")]
+	pub promote_warnings_to_errors: bool,
+	
+	/// Provide more detailed messages.
+	#[clap(
+		short = 'v',
+		long = "verbose",
+		group = "verbosity")]
+	pub verbose: bool,
 
-    /// Silence all non-error program output.
-    #[clap(
-        short = 'q',
-        long = "quiet",
-        alias = "silent",
-        group = "verbosity")]
-    pub quiet: bool,
+	/// Silence all non-error program output.
+	#[clap(
+		short = 'q',
+		long = "quiet",
+		alias = "silent",
+		group = "verbosity")]
+	pub quiet: bool,
 
-    /// Print trace messages.
-    #[clap(
-        long = "ztrace",
-        hide(true))]
-    pub trace: bool,
+	/// Print trace messages.
+	#[clap(
+		long = "ztrace",
+		hide(true))]
+	pub trace: bool,
 }
 
 
@@ -105,96 +105,96 @@ pub struct CommonOptions {
 #[derive(Parser)]
 #[clap(name = "stall")]
 pub enum CommandOptions {
-    Init {
-        #[clap(flatten)]
-        common: CommonOptions,
+	Init {
+		#[clap(flatten)]
+		common: CommonOptions,
 
-        // TODO: Set rename policy
-    },
+		// TODO: Set rename policy
+	},
 
-    Status {
-        #[clap(flatten)]
-        common: CommonOptions,
+	Status {
+		#[clap(flatten)]
+		common: CommonOptions,
 
-        // TODO: Sort entries.
-    },
+		// TODO: Sort entries.
+	},
 
-    Add {
-        #[clap(flatten)]
-        common: CommonOptions,
+	Add {
+		#[clap(flatten)]
+		common: CommonOptions,
 
-        #[clap(parse(from_os_str))]
-        file: PathBuf,
+		#[clap(parse(from_os_str))]
+		file: PathBuf,
 
-        // TODO: Overwrite if exists?
-        // TODO: Immediate collect?
-        // TODO: Add rename?
-        // TODO: Rename if exists?
-        // TODO: multiple?
-    },
+		// TODO: Overwrite if exists?
+		// TODO: Immediate collect?
+		// TODO: Add rename?
+		// TODO: Rename if exists?
+		// TODO: multiple?
+	},
 
-    Remove {
-        #[clap(flatten)]
-        common: CommonOptions,
+	Remove {
+		#[clap(flatten)]
+		common: CommonOptions,
 
-        #[clap(parse(from_os_str))]
-        file: PathBuf,
+		#[clap(parse(from_os_str))]
+		file: PathBuf,
 
-        // TODO: Delete local copy?
-        // TODO: match local name?
-        // TODO: multiple?
-    },
+		// TODO: Delete local copy?
+		// TODO: match local name?
+		// TODO: multiple?
+	},
 
-    Move {
-        #[clap(flatten)]
-        common: CommonOptions,
+	Move {
+		#[clap(flatten)]
+		common: CommonOptions,
 
-        #[clap(parse(from_os_str))]
-        from: PathBuf,
+		#[clap(parse(from_os_str))]
+		from: PathBuf,
 
-        #[clap(parse(from_os_str))]
-        to: PathBuf,
+		#[clap(parse(from_os_str))]
+		to: PathBuf,
 
-        // TODO: Overwrite if exists?
-    },
+		// TODO: Overwrite if exists?
+	},
 
-    /// Copies files into the stall directory.
-    Collect {
-        #[clap(flatten)]
-        common: CommonOptions,
+	/// Copies files into the stall directory.
+	Collect {
+		#[clap(flatten)]
+		common: CommonOptions,
 
-        /// Force copy even if files are unmodified.
-        #[clap(
-            short = 'f',
-            long = "force")]
-        force: bool,
-    },
+		/// Force copy even if files are unmodified.
+		#[clap(
+			short = 'f',
+			long = "force")]
+		force: bool,
+	},
 
-    /// Copies files from the stall directory to their sources.
-    Distribute {
-        #[clap(flatten)]
-        common: CommonOptions,
+	/// Copies files from the stall directory to their sources.
+	Distribute {
+		#[clap(flatten)]
+		common: CommonOptions,
 
-        /// Force copy even if files are unmodified.
-        #[clap(
-            short = 'f',
-            long = "force")]
-        force: bool,
-    },
+		/// Force copy even if files are unmodified.
+		#[clap(
+			short = 'f',
+			long = "force")]
+		force: bool,
+	},
 }
 
 impl CommandOptions {
-    /// Returns the `CommonOptions`.
-    pub fn common(&self) -> &CommonOptions {
-        use CommandOptions::*;
-        match self {
-            Init { common, .. }       |
-            Status { common, .. }     |
-            Add { common, .. }        |
-            Remove { common, .. }     |
-            Move { common, .. }       |
-            Collect { common, .. }    |
-            Distribute { common, .. } => common,
-        }
-    }
+	/// Returns the `CommonOptions`.
+	pub fn common(&self) -> &CommonOptions {
+		use CommandOptions::*;
+		match self {
+			Init { common, .. }       |
+			Status { common, .. }     |
+			Add { common, .. }        |
+			Remove { common, .. }     |
+			Move { common, .. }       |
+			Collect { common, .. }    |
+			Distribute { common, .. } => common,
+		}
+	}
 }

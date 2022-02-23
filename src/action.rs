@@ -79,7 +79,7 @@ impl State {
 
 /// Prints the status header.
 pub fn print_status_header(common: &CommonOptions) {
-    if common.quiet { return; }
+	if common.quiet { return; }
 	println!("{}", "    STATE ACTION FILE".bright_white().bold());
 }
 
@@ -90,7 +90,7 @@ pub fn print_status_line(
 	mut path: &Path,
 	common: &CommonOptions)
 {
-    if common.quiet { return; }
+	if common.quiet { return; }
 	if common.short_names {
 		// Fall back to full name if `Path::file_name` method returns `None`.
 		// This should never happen, but there's no reason to fail.
@@ -118,19 +118,19 @@ pub fn copy_file(source: &Path, target: &Path, method: CopyMethod)
 	use CopyMethod::*;
 	match method {
 		None => event!(Level::DEBUG, "no-run flag was specified: \
-            Not copying data from {:?} to {:?}", source, target),
+			Not copying data from {:?} to {:?}", source, target),
 
 		Subprocess => {
 			let status = if cfg!(target_os = "windows") {
-			    std::process::Command::new("COPY")
-			            .arg(source)
-			            .arg(target)
-			            .status()
+				std::process::Command::new("COPY")
+						.arg(source)
+						.arg(target)
+						.status()
 			} else {
-			    std::process::Command::new("cp")
-			            .arg(source)
-			            .arg(target)
-			            .status()
+				std::process::Command::new("cp")
+						.arg(source)
+						.arg(target)
+						.status()
 			};
 			let _ = status.expect("execute copy command");
 		},
