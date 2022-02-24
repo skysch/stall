@@ -88,6 +88,20 @@ pub fn distribute<'i, P, I>(
 		return Ok(());
 	} 
 
+	// Identify stall files to process.
+	let selected = files
+		.into_iter()
+		.map(|f| stall
+			.entry_local(f)
+			.ok_or_else(|| anyhow!("unrecognized stall entry: {}",
+				f.display())))
+		.collect::<Result<Vec<_>, _>>()?;
+
+	let entries = if selected.is_empty() {
+		Either::Left(stall.entries())
+	} else {
+		Either::Right(selected.into_iter())
+	};
 
 	let mut out = std::io::stdout();
 
@@ -105,21 +119,6 @@ pub fn distribute<'i, P, I>(
 
 	// Process each entry table.
 	Entry::write_status_action_header(&mut out, &common)?;
-
-	let selected = files
-		.into_iter()
-		.map(|f| stall
-			.entry_local(f)
-			.ok_or_else(|| anyhow!("unrecognized stall entry: {}",
-				f.display())))
-		.collect::<Result<Vec<_>, _>>()?;
-
-	let entries = if selected.is_empty() {
-		Either::Left(stall.entries())
-	} else {
-		Either::Right(selected.into_iter())
-	};
-
 	for entry in entries {
 		entry.distribute(
 			&mut out,
