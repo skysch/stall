@@ -139,6 +139,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e25ea47919b1560c4e3b7fe0aaab9becf5b84a10325ddf7db0f0ba5e1026499"
 
 [[package]]
+name = "either"
+version = "1.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
+
+[[package]]
 name = "fcmp"
 version = "0.1.0"
 dependencies = [
@@ -425,6 +431,7 @@ dependencies = [
  "bimap",
  "clap",
  "colored",
+ "either",
  "fcmp",
  "pretty_assertions",
  "ron",

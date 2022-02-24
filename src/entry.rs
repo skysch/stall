@@ -38,7 +38,7 @@ pub struct Entry<'a> {
 
 
 impl<'a> Entry<'a> {
-
+	/// Prints the status of a stall entry.
 	pub fn status(&self, stall_dir: &Path) -> (Status, Status) {
 		use Status::*;
 		use std::cmp::Ordering::*;
@@ -76,6 +76,8 @@ impl<'a> Entry<'a> {
 		}
 	}
 
+	/// Prints the status of the stall entry and copies the remote file into the
+	/// stall directory.
 	pub fn collect(
 		&self,
 		out: &mut dyn Write,
@@ -124,6 +126,8 @@ impl<'a> Entry<'a> {
 		Ok(())
 	}
 
+	/// Prints the status of the stall entry and copies the stalled file into
+	/// the remote directory.
 	pub fn distribute(
 		&self,
 		out: &mut dyn Write,

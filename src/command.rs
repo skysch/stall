@@ -74,7 +74,6 @@ pub struct CommonOptions {
 	#[clap(long = "error")]
 	pub promote_warnings_to_errors: bool,
 
-
 	/// When to color output.
 	#[clap(
 		long = "color",
@@ -178,6 +177,10 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
+		/// Specific files to collect. Defaults to all files.
+		#[clap(parse(from_os_str))]
+		files: Vec<PathBuf>,
+
 		/// Force copy even if files are unmodified.
 		#[clap(
 			short = 'f',
@@ -193,6 +196,10 @@ pub enum CommandOptions {
 	Distribute {
 		#[clap(flatten)]
 		common: CommonOptions,
+
+		/// Specific files to distribute. Defaults to all files.
+		#[clap(parse(from_os_str))]
+		files: Vec<PathBuf>,
 
 		/// Force copy even if files are unmodified.
 		#[clap(
@@ -235,11 +242,11 @@ impl CommandOptions {
 pub enum ColorOption {
 	/// Color usage is automatically determined based on environment variables
 	/// and TTY usage.
-    Auto,
-    /// Color output should always be generated.
-    Always,
-    /// Color output should never be generated.
-    Never,
+	Auto,
+	/// Color output should always be generated.
+	Always,
+	/// Color output should never be generated.
+	Never,
 }
 
 impl ColorOption {
@@ -257,19 +264,19 @@ impl ColorOption {
 }
 
 impl std::str::FromStr for ColorOption {
-    type Err = ColorOptionParseError;
+	type Err = ColorOptionParseError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.eq_ignore_ascii_case("auto") {
-            Ok(ColorOption::Auto)
-        } else if s.eq_ignore_ascii_case("always") {
-            Ok(ColorOption::Always)
-        } else if s.eq_ignore_ascii_case("never") {
-            Ok(ColorOption::Never)
-        } else {
-            Err(ColorOptionParseError)
-        }
-    }
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		if s.eq_ignore_ascii_case("auto") {
+			Ok(ColorOption::Auto)
+		} else if s.eq_ignore_ascii_case("always") {
+			Ok(ColorOption::Always)
+		} else if s.eq_ignore_ascii_case("never") {
+			Ok(ColorOption::Never)
+		} else {
+			Err(ColorOptionParseError)
+		}
+	}
 }
 
 /// An error indicating a failure to parse a [`ColorOption`].
@@ -281,7 +288,7 @@ pub struct ColorOptionParseError;
 impl std::error::Error for ColorOptionParseError {}
 
 impl std::fmt::Display for ColorOptionParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "failure to parse ColorOption")
-    }
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "failure to parse ColorOption")
+	}
 }

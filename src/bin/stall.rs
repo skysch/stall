@@ -181,16 +181,18 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 		Remove { common, .. }  |
 		Move { common, .. }    => todo!(),
 
-		Collect { common, force, dry_run, .. } => stall::collect(
+		Collect { common, files, force, dry_run, .. } => stall::collect(
 			stall_dir,
 			&stall_data,
+			&files,
 			force,
 			dry_run,
 			common),
 
-		Distribute { common, force, dry_run, .. } => stall::distribute(
+		Distribute { common, files, force, dry_run, .. } => stall::distribute(
 			stall_dir,
 			&stall_data,
+			&files, 
 			force,
 			dry_run,
 			common),

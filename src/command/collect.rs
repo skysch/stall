@@ -13,13 +13,16 @@ use crate::Stall;
 use crate::entry::Entry;
 
 // External library imports.
+use anyhow::anyhow;
 use anyhow::Error;
-use tracing::span;
-use tracing::Level;
 use colored::Colorize as _;
+use either::Either;
+use tracing::Level;
+use tracing::span;
 
 // Standard library imports.
 use std::path::Path;
+use std::path::PathBuf;
 use std::io::Write as _;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -65,6 +68,7 @@ use std::io::Write as _;
 pub fn collect<P>(
 	stall_dir: P,
 	stall: &Stall,
+	files: &[PathBuf],
 	force: bool,
 	dry_run: bool,
 	common: CommonOptions) 
@@ -100,9 +104,23 @@ pub fn collect<P>(
 
 	// Process each entry table.
 	Entry::write_status_action_header(&mut out, &common)?;
-	for entry in stall.entries() {
 
-		let action = entry.collect(
+
+	let entries = if files.is_empty() {
+		Either::Left(stall.entries())
+	} else {
+		let selected = files
+			.iter()
+			.map(|f| stall
+				.entry_local(f.as_path())
+				.ok_or_else(|| anyhow!("unrecognized stall entry: {}",
+					f.display())))
+			.collect::<Result<Vec<_>, _>>()?;
+		Either::Right(selected.into_iter())
+	};
+
+	for entry in entries {
+		entry.collect(
 			&mut out,
 			stall_dir,
 			force,
