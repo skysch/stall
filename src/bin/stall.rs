@@ -184,7 +184,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 		Collect { common, files, force, dry_run, .. } => stall::collect(
 			stall_dir,
 			&stall_data,
-			&files,
+			files.iter().map(|f| f.as_path()),
 			force,
 			dry_run,
 			common),
@@ -192,7 +192,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 		Distribute { common, files, force, dry_run, .. } => stall::distribute(
 			stall_dir,
 			&stall_data,
-			&files, 
+			files.iter().map(|f| f.as_path()),
 			force,
 			dry_run,
 			common),

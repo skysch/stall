@@ -22,7 +22,6 @@ use tracing::span;
 
 // Standard library imports.
 use std::path::Path;
-use std::path::PathBuf;
 use std::io::Write as _;
 
 
@@ -66,16 +65,17 @@ use std::io::Write as _;
 /// [`CommonOptions`]: ../command/struct.CommonOptions.html
 /// [`Error`]: ../error/struct.Error.html
 /// 
-pub fn distribute<P>(
+pub fn distribute<'i, P, I>(
 	stall_dir: P,
 	stall: &Stall,
-	files: &[PathBuf],
+	files: I,
 	force: bool,
 	dry_run: bool,
 	common: CommonOptions) 
 	-> Result<(), Error>
 	where 
 		P: AsRef<Path>,
+		I: IntoIterator<Item=&'i Path>
 {
 	let _span = span!(Level::INFO, "distribute").entered();
 
@@ -106,17 +106,17 @@ pub fn distribute<P>(
 	// Process each entry table.
 	Entry::write_status_action_header(&mut out, &common)?;
 
+	let selected = files
+		.into_iter()
+		.map(|f| stall
+			.entry_local(f)
+			.ok_or_else(|| anyhow!("unrecognized stall entry: {}",
+				f.display())))
+		.collect::<Result<Vec<_>, _>>()?;
 
-	let entries = if files.is_empty() {
+	let entries = if selected.is_empty() {
 		Either::Left(stall.entries())
 	} else {
-		let selected = files
-			.iter()
-			.map(|f| stall
-				.entry_local(f.as_path())
-				.ok_or_else(|| anyhow!("unrecognized stall entry: {}",
-					f.display())))
-			.collect::<Result<Vec<_>, _>>()?;
 		Either::Right(selected.into_iter())
 	};
 
