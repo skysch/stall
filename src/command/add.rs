@@ -23,23 +23,23 @@ use std::path::Path;
 use std::path::PathBuf;
 
 
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // add
 ////////////////////////////////////////////////////////////////////////////////
 /// Executes the 'stall-add' command.
 ///
-/// This will 
+/// Adds entries into a stall file.
 ///
 /// ### Parameters
 ///
-/// + `stall_dir`: The stall directory to collect into.
 /// + `stall`: The loaded `Stall` data.
-/// + `files`: An iterator over the [`Path`]s of the files to collect.
-/// + `force`: Force overwrites even if the files are current.
-/// + `dry_run`: Do not copy any files.
+/// + `files`: An iterator over the [`Path`]s of the files to add.
+/// + `rename`: The name to use for any local stall path. (If use with multiple
+/// files, they will all end up with the same name.)
+/// + `into`: A subdirectory within the stall to place the files.
+/// + `collect_stall_dir`: The stall directory to collect into, or `None` if no
+/// collect should occur.
+/// + `dry_run`: Do not modify any files.
 /// + `common`: The [`CommonOptions`] to use for the command.
 ///
 /// ### Errors
@@ -53,17 +53,18 @@ use std::path::PathBuf;
 /// [`Error`]: ../error/struct.Error.html
 /// 
 pub fn add<'i, I>(
-    stall_dir: &Path,
     stall: &mut Stall,
     files: I,
     rename: Option<&Path>,
     into: Option<&Path>,
-    collect: bool,
+    collect_stall_dir: Option<&Path>,
+    dry_run: bool,
     common: &CommonOptions)
     -> Result<(), Error>
     where I: IntoIterator<Item=&'i Path>
 {
     let _span = span!(Level::INFO, "add").entered();
+    if dry_run && common.quiet { return Ok(()); }
 
     for remote in files.into_iter() {
         event!(Level::DEBUG, "Add entry with remote path: {:?}", remote);
@@ -91,14 +92,21 @@ pub fn add<'i, I>(
 
         event!(Level::DEBUG, "      ... with local path: {:?}", local);
 
+        if dry_run {
+            println!("Insert stall entry {} from {}",
+                local.display(),
+                remote.display());
+            return Ok(())
+        }
+
         stall.insert(local, remote.to_owned());
 
-        if collect {
+        if let Some(stall_dir) = collect_stall_dir {
             let mut out = std::io::stdout();
 
             stall.entry_remote(remote)
                 .expect("get added entry for collect")
-                .collect(&mut out, stall_dir, false, false, common)?;
+                .collect(&mut out, stall_dir, false, dry_run, common)?;
         }
     }
 

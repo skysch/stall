@@ -122,6 +122,7 @@ pub enum CommandOptions {
 		common: CommonOptions,
 
 		// TODO: Set rename policy
+		// TODO: Create prefs file?
 	},
 
 	/// Print the status of stalled files.
@@ -129,8 +130,10 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		// TODO: Sort entries.
+		// TODO: Filter entries?
 	},
+
+	// TODO: Add Diff subcommand.
 
 	/// Add files to a stall.
 	Add {
@@ -160,6 +163,12 @@ pub enum CommandOptions {
 			long = "collect")]
 		collect: bool,
 
+		/// Print intended operations instead of running them.
+		#[clap(long = "dry-run")]
+		dry_run: bool,
+
+		// TODO: Rename multiple files. Needs some kind of 'file iterator 
+		// naming schema'
 		// TODO: Rename if exists? Needs some kind of 'backup naming schema.'
 	},
 
@@ -181,10 +190,14 @@ pub enum CommandOptions {
 
 		/// Select files do delete based on their remote paths instead of their
 		/// paths within the stall directory.
-		#[clap(
-			short = 'r',
-			long = "remote-name")]
-		remote_name: bool,
+		#[clap(long = "remote-naming")]
+		remote_naming: bool,
+
+		/// Print intended operations instead of running them.
+		#[clap(long = "dry-run")]
+		dry_run: bool,
+
+		// TODO: Support glob naming?
 	},
 
 	/// Rename a file in a stall. Future collect/distribute actions will use

@@ -51,9 +51,6 @@ pub struct Stall {
 
     /// The stall file entries. (Left = Local, Right = Remote)
     entries: BiBTreeMap<PathBuf, PathBuf>,
-
-
-    // TODO: Auto-rename on add
 }
 
 impl Stall {

@@ -65,6 +65,7 @@ pub fn distribute<'i, I>(
 	where I: IntoIterator<Item=&'i Path>
 {
 	let _span = span!(Level::INFO, "distribute").entered();
+	if dry_run && common.quiet { return Ok(()); }
 
 	if stall.is_empty() {
 		if !common.quiet {

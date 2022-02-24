@@ -9,13 +9,13 @@ The following is a change log, documenting added, removed, changed, depricated, 
 Implemented changes not yet published.
 
 ### Added
-+ (TODO) Added `add` command.
-+ (TODO) Added `rm` command.
-+ (TODO) Added `status` command.
-+ (TODO) Added `init` command.
-+ (TODO) Added `mv` command.
++ Added `add` subcommand.
++ Added `rm` subcommand.
++ Added `status` subcommand.
++ (TODO) Added `init` subcommand.
++ (TODO) Added `mv` subcommand.
 + Added support for file renaming.
-+ (TODO) Show both file states for readability.
++ Show both file states for readability.
 + Added a message to indicate no changes when the stall is empty.
 
 ### Fixed
@@ -25,7 +25,7 @@ Implemented changes not yet published.
 + Updated command line flags.
 + Replaced structopt with clap 3.1.
 + Update application framework; replace logging with tracing.
-+ (TODO) Use fcmp to compare files.
++ Use fcmp to compare files.
 
 
 ## Stall 0.1  [2020-07-01]

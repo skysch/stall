@@ -20,6 +20,7 @@ use anyhow::Context;
 use anyhow::Error;
 use anyhow::anyhow;
 use clap::Parser;
+use clap::CommandFactory as _;
 use tracing::event;
 use tracing::Level;
 use tracing::span;
@@ -179,16 +180,41 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 			&stall_data,
 			common),
 
-		Add { common, files, rename, into, collect, .. } => stall::add(
-			stall_dir.as_path(),
-			&mut stall_data,
-			files.iter().map(|f| f.as_path()),
-			rename.as_ref().map(|p| p.as_path()),
-			into.as_ref().map(|p| p.as_path()),
-			collect,
-			&common),
+		Add { common, files, rename, into, collect, dry_run, .. } => {
+			// Emit error if using --rename with multiple files.
+			if files.len() > 1 && rename.is_some() {
+				// TODO: Figure out how to produce better error output.
+				CommandOptions::command()
+					.find_subcommand("add")
+					.unwrap()
+					.clone()
+					.error(
+						clap::ErrorKind::ArgumentConflict,
+                    	"--rename option is not supported when multiple FILES \
+                    		are provided")
+                	.exit()
+			}
 
-		Remove { common, .. }  |
+			stall::add(
+				&mut stall_data,
+				files.iter().map(|f| f.as_path()),
+				rename.as_ref().map(|p| p.as_path()),
+				into.as_ref().map(|p| p.as_path()),
+				if collect { Some(stall_dir.as_path()) } else { None },
+				dry_run,
+				&common)
+		},
+
+		Remove { common, files, delete, remote_naming, dry_run, .. } => {
+			stall::remove(
+				&mut stall_data,
+				files.iter().map(|f| f.as_path()),
+				if delete { Some(stall_dir.as_path()) } else { None },
+				remote_naming,
+				dry_run,
+				&common)
+		},
+
 		Move { common, .. }    => todo!(),
 
 		Collect { common, files, force, dry_run, .. } => stall::collect(
