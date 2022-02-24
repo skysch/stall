@@ -404,14 +404,16 @@ fn copy(source: &Path, target: &Path, method: CopyMethod)
 
 		Subprocess => {
 			let status = if cfg!(target_os = "windows") {
-				std::process::Command::new("COPY")
-					.arg("/y")
+				std::process::Command::new("Xcopy")
 					.arg(source)
 					.arg(target)
+					.args(["/h", "/s", "/e", "/x", "/y", "/i"])
 					.status()
 			} else {
+				// NOTE: -R (recursive dir copy) and -p (preserve attribute
+				// such as timestamps) are POSIX requirements.
 				std::process::Command::new("cp")
-					.args(["--preserve"])
+					.args(["-R", "-p"])
 					.arg(source)
 					.arg(target)
 					.status()

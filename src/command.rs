@@ -48,13 +48,15 @@ pub struct CommonOptions {
 	/// The application configuration file to load.
 	#[clap(
 		long = "config",
-		parse(from_os_str))]
+		parse(from_os_str),
+		hide(true))]
 	pub config: Option<PathBuf>,
 
 	/// The user preferences file to load.
 	#[clap(
 		long = "prefs",
-		parse(from_os_str))]
+		parse(from_os_str),
+		hide(true))]
 	pub prefs: Option<PathBuf>,
 
 	/// The stall file to load.
@@ -130,42 +132,73 @@ pub enum CommandOptions {
 		// TODO: Sort entries.
 	},
 
-	/// Add a file to a stall.
+	/// Add files to a stall.
 	Add {
 		#[clap(flatten)]
 		common: CommonOptions,
 
+		/// The files to add to the stall.
 		#[clap(parse(from_os_str))]
-		file: PathBuf,
+		files: Vec<PathBuf>,
 
-		// TODO: Overwrite if exists?
-		// TODO: Immediate collect?
-		// TODO: Add rename?
-		// TODO: Rename if exists?
-		// TODO: multiple?
+		/// Rename the file within the stall. Cannot be used if multiple files
+		/// are added.
+		#[clap(
+			long = "rename",
+			parse(from_os_str))]
+		rename: Vec<PathBuf>,
+
+		/// Add stall files to a subdirectory.
+		#[clap(
+			long = "into",
+			parse(from_os_str))]
+		into: Vec<PathBuf>,
+
+		/// Immediately collect the added files.
+		#[clap(
+			short = 'c',
+			long = "collect")]
+		collect: bool,
+
+		// TODO: Rename if exists? Needs some kind of 'backup naming schema.'
 	},
 
-	/// Remove a file from a stall.
+	/// Remove files from a stall.
+	#[clap(name = "rm")]
 	Remove {
 		#[clap(flatten)]
 		common: CommonOptions,
 
+		/// The files to remove from to the stall.
 		#[clap(parse(from_os_str))]
-		file: PathBuf,
+		files: Vec<PathBuf>,
 
-		// TODO: Delete local copy?
-		// TODO: match local name?
-		// TODO: multiple?
+		/// Delete the stalled file copy.
+		#[clap(
+			short = 'd',
+			long = "delete")]
+		delete: bool,
+
+		/// Select files do delete based on their remote paths instead of their
+		/// paths within the stall directory.
+		#[clap(
+			short = 'r',
+			long = "remote-name")]
+		remote_name: bool,
 	},
 
-	/// Rename a file in a stall.
+	/// Rename a file in a stall. Future collect/distribute actions will use
+	/// the new name.
+	#[clap(name = "mv")]
 	Move {
 		#[clap(flatten)]
 		common: CommonOptions,
 
+		/// The current name of the file in the stall.
 		#[clap(parse(from_os_str))]
 		from: PathBuf,
 
+		/// The new name of the file in the stall.
 		#[clap(parse(from_os_str))]
 		to: PathBuf,
 
