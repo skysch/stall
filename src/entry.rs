@@ -38,7 +38,7 @@ pub struct Entry<'a> {
 
 
 impl<'a> Entry<'a> {
-	/// Prints the status of a stall entry.
+	/// Returns the file statuses for the local and remote entry paths.
 	pub fn status(&self, stall_dir: &Path) -> (Status, Status) {
 		use Status::*;
 		use std::cmp::Ordering::*;

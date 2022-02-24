@@ -30,52 +30,39 @@ use std::io::Write as _;
 ////////////////////////////////////////////////////////////////////////////////
 /// Executes the 'stall-distribute' command.
 ///
-/// This will iterate over each file, checking if it is more recent than its
-/// counterpart in the stall directory by comparing their modification times.
-/// If the file is older than the one in the stall directory, it will be 
-/// overwritten by the one in the stall directory.
-///
-/// ### Command line options
-///
-/// The `--force` option will cause the overwrite to occur even if the file
-/// is newer than the one in the stall directory.
-///
-/// The `--error` option will cause the function to return with an error if any
-/// of the distributed files cannot be opened or read. Further files will not be
-/// processed.
-///
-/// The `--dry-run` option will prevent any file copying, but all of the normal
-/// checks and outputs will be emitted.
-///
-/// The `--verbose`, `--quiet`, `--xtrace`, and `--short-names` options will
-/// change which outputs are produced.
+/// This will iterate over each entry in the [`Stall`], checking if it is older
+/// than its counterpart in the remote directory by comparing their modification
+/// times. If the stall file is newer, it will be copied into the remote
+/// directory, overwriting the existing file.
 ///
 /// ### Parameters
-/// + `from`: The 'stall directory' to distribute from. Takes a generic argument
-/// that implements [`AsRef`]`<`[`Path`]`>`.
+///
+/// + `stall_dir`: The stall directory to distribute from.
+/// + `stall`: The loaded `Stall` data.
+/// + `files`: An iterator over the [`Path`]s of the files to distribute.
+/// + `force`: Force overwrites even if the files are current.
+/// + `dry_run`: Do not copy any files.
 /// + `common`: The [`CommonOptions`] to use for the command.
-/// + `files`: An iterator over the [`Path`]s of the files to collect.
 ///
 /// ### Errors
 /// 
-/// Returns an [`Error`] if both files exist but their metadata can't be read, or if the copy operation fails for some reason.
+/// Returns an [`Error`] if both files exist but their metadata can't be read,
+/// if the copy operation fails, or if any IO errors occur.
 /// 
-/// [`AsRef`]: https://doc.rust-lang.org/stable/std/convert/trait.AsRef.html
 /// [`Path`]: https://doc.rust-lang.org/stable/std/path/struct.Path.html
+/// [`Stall`]: ../struct.Stall.html
 /// [`CommonOptions`]: ../command/struct.CommonOptions.html
 /// [`Error`]: ../error/struct.Error.html
 /// 
-pub fn distribute<'i, P, I>(
-	stall_dir: P,
+pub fn distribute<'i, I>(
+	stall_dir: &Path,
 	stall: &Stall,
 	files: I,
 	force: bool,
 	dry_run: bool,
 	common: CommonOptions) 
 	-> Result<(), Error>
-	where 
-		P: AsRef<Path>,
-		I: IntoIterator<Item=&'i Path>
+	where I: IntoIterator<Item=&'i Path>
 {
 	let _span = span!(Level::INFO, "distribute").entered();
 
@@ -106,7 +93,6 @@ pub fn distribute<'i, P, I>(
 	let mut out = std::io::stdout();
 
 	// Setup and print stall directory.
-	let stall_dir = stall_dir.as_ref();
 	if common.color.enabled() {
 		writeln!(&mut out, "{} {}",
 			"Stall directory:".bright_white(),

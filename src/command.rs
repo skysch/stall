@@ -146,13 +146,13 @@ pub enum CommandOptions {
 		#[clap(
 			long = "rename",
 			parse(from_os_str))]
-		rename: Vec<PathBuf>,
+		rename: Option<PathBuf>,
 
 		/// Add stall files to a subdirectory.
 		#[clap(
 			long = "into",
 			parse(from_os_str))]
-		into: Vec<PathBuf>,
+		into: Option<PathBuf>,
 
 		/// Immediately collect the added files.
 		#[clap(

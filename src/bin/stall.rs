@@ -127,6 +127,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 			prefs
 		},
 	};
+	event!(Level::DEBUG, "{:#?}", prefs);
 
 	// Find the path for the stall file.
 	let stall_path = match &common.stall {
@@ -148,7 +149,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	};
 
 	// Load the stall file.
-	let stall_data = match Stall::read_from_path(&stall_path) {
+	let mut stall_data = match Stall::read_from_path(&stall_path) {
 		Err(e) if common.stall.is_some() => {
 			// Path is user-specified, so it is an error to now load it.
 			return Err(Error::from(e)).with_context(|| format!(
@@ -166,10 +167,11 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 			stall_data
 		},
 	};
+	event!(Level::DEBUG, "{:#?}", stall_data);
 	
 	// Dispatch to appropriate commands.
 	use CommandOptions::*;
-	match command {
+	let res = match command {
 		Init { common, .. }    => todo!(),
 		
 		Status { common, .. }  => stall::status(
@@ -177,12 +179,20 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 			&stall_data,
 			common),
 
-		Add { common, .. }     |
+		Add { common, files, rename, into, collect, .. } => stall::add(
+			stall_dir.as_path(),
+			&mut stall_data,
+			files.iter().map(|f| f.as_path()),
+			rename.as_ref().map(|p| p.as_path()),
+			into.as_ref().map(|p| p.as_path()),
+			collect,
+			&common),
+
 		Remove { common, .. }  |
 		Move { common, .. }    => todo!(),
 
 		Collect { common, files, force, dry_run, .. } => stall::collect(
-			stall_dir,
+			stall_dir.as_path(),
 			&stall_data,
 			files.iter().map(|f| f.as_path()),
 			force,
@@ -190,12 +200,22 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 			common),
 
 		Distribute { common, files, force, dry_run, .. } => stall::distribute(
-			stall_dir,
+			stall_dir.as_path(),
 			&stall_data,
 			files.iter().map(|f| f.as_path()),
 			force,
 			dry_run,
 			common),
+	};
+
+	// Save the stall data if any changes occurred.
+	// TODO: Should the stall be saved if an error occurs above?
+	if stall_data.modified() {
+		if stall_data.write_to_load_path()? {
+			event!(Level::INFO, "Stall saved.");
+		}
 	}
+
+	return res
 }
 

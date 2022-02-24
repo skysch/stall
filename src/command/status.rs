@@ -26,16 +26,32 @@ use std::io::Write as _;
 ////////////////////////////////////////////////////////////////////////////////
 // collect
 ////////////////////////////////////////////////////////////////////////////////
-/// Executes the 'stall-status' command.
+/// Executes the 'stall-distribute' command.
 ///
-
+/// This will iterate over each entry in the [`Stall`], print the comparative
+/// status of each file.
+///
+/// ### Parameters
+///
+/// + `stall_dir`: The stall directory to distribute from.
+/// + `stall`: The loaded `Stall` data.
+/// + `common`: The [`CommonOptions`] to use for the command.
+///
+/// ### Errors
+/// 
+/// Returns an [`Error`] if an IO errors during writing occur.
+/// 
+/// [`Path`]: https://doc.rust-lang.org/stable/std/path/struct.Path.html
+/// [`Stall`]: ../struct.Stall.html
+/// [`CommonOptions`]: ../command/struct.CommonOptions.html
+/// [`Error`]: ../error/struct.Error.html
+/// 
 pub fn status<P>(
 	stall_dir: P,
 	stall: &Stall,
 	common: CommonOptions) 
 	-> Result<(), Error>
-	where 
-		P: AsRef<Path>,
+	where P: AsRef<Path>,
 {
 	let _span = span!(Level::INFO, "status").entered();
 	

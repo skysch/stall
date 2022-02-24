@@ -14,7 +14,7 @@ use crate::entry::Entry;
 // External library imports.
 use anyhow::Context as _;
 use anyhow::Error;
-use bimap::BiHashMap;
+use bimap::BiBTreeMap;
 use serde::Deserialize;
 use serde::Serialize;
 use tracing::event;
@@ -50,7 +50,7 @@ pub struct Stall {
     load_status: LoadStatus,
 
     /// The stall file entries. (Left = Local, Right = Remote)
-    entries: BiHashMap<PathBuf, PathBuf>,
+    entries: BiBTreeMap<PathBuf, PathBuf>,
 
 
     // TODO: Auto-rename on add
@@ -64,7 +64,7 @@ impl Stall {
         Stall {
             load_status: LoadStatus::default()
                 .with_load_path(path),
-            entries: BiHashMap::new(),
+            entries: BiBTreeMap::new(),
         }
     }
 
@@ -72,7 +72,7 @@ impl Stall {
     fn new_detached() -> Self {
         Stall {
             load_status: LoadStatus::default(),
-            entries: BiHashMap::new(),
+            entries: BiBTreeMap::new(),
         }
     }
 
