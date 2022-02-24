@@ -63,10 +63,6 @@ pub struct CommonOptions {
 		long = "stall",
 		parse(from_os_str))]
 	pub stall: Option<PathBuf>,
-
-	/// Print intended operations instead of running them.
-	#[clap(long = "dry-run")]
-	pub dry_run: bool,
 	
 	/// Shorten filenames by omitting path prefixes.
 	#[clap(
@@ -187,6 +183,10 @@ pub enum CommandOptions {
 			short = 'f',
 			long = "force")]
 		force: bool,
+
+		/// Print intended operations instead of running them.
+		#[clap(long = "dry-run")]
+		dry_run: bool,
 	},
 
 	/// Copi files from the stall directory to their remote locations.
@@ -199,6 +199,10 @@ pub enum CommandOptions {
 			short = 'f',
 			long = "force")]
 		force: bool,
+
+		/// Print intended operations instead of running them.
+		#[clap(long = "dry-run")]
+		dry_run: bool,
 	},
 }
 
@@ -229,8 +233,12 @@ impl CommandOptions {
 #[derive(Serialize, Deserialize)]
 #[derive(clap::ArgEnum)]
 pub enum ColorOption {
+	/// Color usage is automatically determined based on environment variables
+	/// and TTY usage.
     Auto,
+    /// Color output should always be generated.
     Always,
+    /// Color output should never be generated.
     Never,
 }
 

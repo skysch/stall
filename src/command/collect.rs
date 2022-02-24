@@ -9,26 +9,18 @@
 
 // Internal library imports.
 use crate::CommonOptions;
-use crate::entry::Stall;
-use crate::error::InvalidFile;
-use crate::error::MissingFile;
-use crate::action::Action;
-use crate::action::copy_file;
-use crate::action::CopyMethod;
-use crate::action::print_status_header;
-use crate::action::print_status_line;
-use crate::action::State;
+use crate::Stall;
+use crate::entry::Entry;
 
 // External library imports.
 use anyhow::Error;
-use anyhow::Context;
-use tracing::event;
 use tracing::span;
 use tracing::Level;
 use colored::Colorize as _;
 
 // Standard library imports.
 use std::path::Path;
+use std::io::Write as _;
 
 ////////////////////////////////////////////////////////////////////////////////
 // collect
@@ -74,6 +66,7 @@ pub fn collect<P>(
 	stall_dir: P,
 	stall: &Stall,
 	force: bool,
+	dry_run: bool,
 	common: CommonOptions) 
 	-> Result<(), Error>
 	where 
@@ -81,80 +74,40 @@ pub fn collect<P>(
 {
 	let _span = span!(Level::INFO, "collect").entered();
 
-	let stall_dir = stall_dir.as_ref();
-	if !common.quiet {
-		println!("{} {}", 
-			"Destination directory:".bright_white(),
-			stall_dir.display());
-		if stall.is_empty() {
-			println!("No files to distribute. Use `add` command to place files \
-				in the stall.");
-			return Ok(());
+	if stall.is_empty() {
+		if !common.quiet {
+			println!("No files in stall. Use `add` command to place files \
+			in the stall.");
 		}
+		// Nothing to do if there's no data.
+		return Ok(());
+	} 
+
+
+	let mut out = std::io::stdout();
+
+	// Setup and print stall directory.
+	let stall_dir = stall_dir.as_ref();
+	if common.color.enabled() {
+		writeln!(&mut out, "{} {}",
+			"Stall directory:".bright_white(),
+			stall_dir.display())?;
+	} else {
+		writeln!(&mut out, "{} {}",
+			"Stall directory:",
+			stall_dir.display())?;
 	}
 
-	let copy_method = match common.dry_run {
-		true  => CopyMethod::None,
-		false => CopyMethod::Subprocess,
-	};
-	event!(Level::DEBUG, "Copy method: {:?}", copy_method);
+	// Process each entry table.
+	Entry::write_status_action_header(&mut out, &common)?;
+	for entry in stall.entries() {
 
-	print_status_header(&common);
-
-	for source in stall.entries().map(|e| e.remote) {
-		event!(Level::DEBUG, "Processing source file: {:?}", source);
-		let file_name = source.file_name().ok_or(InvalidFile)?;
-		let target = stall_dir.join(file_name);
-
-		use State::*;
-		use Action::*;
-		match (source.exists(), target.exists()) {
-			// Both files exist, compare modify dates.
-			(true,  true) => {
-				let source_last_modified = source.metadata()
-					.with_context(|| "load source metadata")?
-					.modified()
-					.with_context(|| "load source modified time")?;
-				event!(
-					Level::TRACE, 
-					"Source last modified: {:?}",
-					source_last_modified);
-				let target_last_modified = target.metadata()
-					.with_context(|| "load target metadata")?
-					.modified()
-					.with_context(|| "load target modified time")?;
-				event!(
-					Level::TRACE, 
-					"Target last modified: {:?}",
-					source_last_modified);
-
-				if source_last_modified > target_last_modified {
-					print_status_line(Newer, Copy, source, &common);
-
-				} else if force {
-					print_status_line(Force, Copy, source, &common);
-
-				} else {
-					print_status_line(Older, Skip, source, &common);
-					continue;
-				}
-			},
-
-			// Source exists, but not target.
-			(true, false) => print_status_line(Found, Copy, source, &common),
-
-			// Source does not exist.
-			(false, _) => if common.promote_warnings_to_errors {
-				print_status_line(Error, Stop, source, &common);
-				return Err(MissingFile { path: source.into() }.into());
-			} else {
-				print_status_line(Error, Skip, source, &common);
-				continue;
-			},
-		}
-
-		// If we got this far, we're collecting this file.
-		copy_file(source, &target, copy_method)?;
+		let action = entry.collect(
+			&mut out,
+			stall_dir,
+			force,
+			dry_run,
+			&common)?;
 	}
 
 	Ok(())

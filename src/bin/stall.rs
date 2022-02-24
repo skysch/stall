@@ -11,7 +11,7 @@
 // Internal library imports.
 use stall::application::Config;
 use stall::application::Prefs;
-use stall::entry::Stall;
+use stall::Stall;
 use stall::application::TraceGuard;
 use stall::CommandOptions;
 
@@ -62,26 +62,9 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	// We do this up front because current_dir might fail due to access
 	// problems, and we only want to error out if we really need to use it.
 	let cur_dir = std::env::current_dir()?;
-	let stall_path = match &common.stall {
-		Some(path) => path.clone(),
-		None       => cur_dir.join(Config::DEFAULT_STALL_PATH),
-	};
-	if !stall_path.is_file() {
-		return Err(anyhow!("stall path is not a file: {}",
-			stall_path.display()));
-	}
-	let stall_dir = match &common.stall {
-		Some(path) => stall_path
-			.parent()
-			.ok_or_else(|| anyhow!(
-				"unable to determine stall parent directory: {}",
-				stall_path.display()))?
-			.to_path_buf(),
-		None       => cur_dir,
-	};
 	let config_path = match &common.config {
 		Some(path) => path.clone(),
-		None       => stall_dir.join(Config::DEFAULT_CONFIG_PATH),
+		None       => cur_dir.join(Config::DEFAULT_CONFIG_PATH),
 	};
 
 	// Load the config file.
@@ -120,7 +103,6 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	event!(Level::DEBUG, "{:#?}", config);
 
 	// Find the path for the prefs file.
-	let cur_dir = std::env::current_dir()?;
 	let prefs_path = match &common.prefs {
 		Some(path) => path.clone(),
 		None       => cur_dir.join(&config.prefs_path),
@@ -131,7 +113,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 		Err(e) if common.prefs.is_some() => {
 			// Path is user-specified, so it is an error to now load it.
 			return Err(Error::from(e)).with_context(|| format!(
-				"Unable to load prefs file: {:?}", 
+				"Unable to load preferences file: {:?}", 
 				prefs_path));
 		},
 		Err(_) => {
@@ -147,10 +129,22 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	};
 
 	// Find the path for the stall file.
-	let cur_dir = std::env::current_dir()?;
 	let stall_path = match &common.stall {
 		Some(path) => path.clone(),
-		None       => stall_dir.join(Config::DEFAULT_STALL_PATH),
+		None       => cur_dir.join(Config::DEFAULT_STALL_PATH),
+	};
+	if !stall_path.is_file() {
+		return Err(anyhow!("stall path is not a file: {}",
+			stall_path.display()));
+	}
+	let stall_dir = match &common.stall {
+		Some(_path) => stall_path
+			.parent()
+			.ok_or_else(|| anyhow!(
+				"unable to determine stall parent directory: {}",
+				stall_path.display()))?
+			.to_path_buf(),
+		None       => cur_dir,
 	};
 
 	// Load the stall file.
@@ -187,16 +181,18 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 		Remove { common, .. }  |
 		Move { common, .. }    => todo!(),
 
-		Collect { common, force, .. } => stall::collect(
+		Collect { common, force, dry_run, .. } => stall::collect(
 			stall_dir,
 			&stall_data,
 			force,
+			dry_run,
 			common),
 
-		Distribute { common, force, .. } => stall::distribute(
+		Distribute { common, force, dry_run, .. } => stall::distribute(
 			stall_dir,
 			&stall_data,
 			force,
+			dry_run,
 			common),
 	}
 }

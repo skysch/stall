@@ -9,19 +9,18 @@
 
 // Internal library imports.
 use crate::CommonOptions;
-use crate::entry::Stall;
+use crate::Stall;
 use crate::entry::Entry;
 
 // External library imports.
-use anyhow::Context;
 use anyhow::Error;
-use tracing::event;
 use tracing::span;
 use tracing::Level;
 use colored::Colorize as _;
 
 // Standard library imports.
 use std::path::Path;
+use std::io::Write as _;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,32 +31,44 @@ use std::path::Path;
 
 pub fn status<P>(
 	stall_dir: P,
-	data: &Stall,
+	stall: &Stall,
 	common: CommonOptions) 
 	-> Result<(), Error>
 	where 
 		P: AsRef<Path>,
 {
 	let _span = span!(Level::INFO, "status").entered();
-
-	if !common.quiet {
-		if data.is_empty() {
+	
+	if stall.is_empty() || common.quiet {
+		if !common.quiet {
 			println!("No files in stall. Use `add` command to place files \
 				in the stall.");
-			return Ok(());
 		}
-	} else {
 		// Nothing to do if asking for status with --quiet.
 		return Ok(());
 	}
 
 
-	let stall_dir = stall_dir.as_ref();
 	let mut out = std::io::stdout();
 
+	// Setup and print stall directory.
+	let stall_dir = stall_dir.as_ref();
+	if common.color.enabled() {
+		writeln!(&mut out, "{} {}",
+			"Stall directory:".bright_white(),
+			stall_dir.display())?;
+	} else {
+		writeln!(&mut out, "{} {}",
+			"Stall directory:",
+			stall_dir.display())?;
+	}
+
+	// Write status table.
 	Entry::write_status_header(&mut out, &common)?;
-	for entry in data.entries() {
-		entry.write_status(&mut out, stall_dir, &common)?;
+	for entry in stall.entries() {
+
+		let (status_l, status_r) = entry.status(stall_dir);
+		entry.write_status(&mut out, status_l, status_r, &common)?;
 	}
 
 	Ok(())

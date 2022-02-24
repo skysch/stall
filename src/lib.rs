@@ -40,13 +40,14 @@
 
 
 // Internal modules.
-pub mod command;
+mod stall;
 
 // Public modules.
-pub mod action;
+pub mod command;
 pub mod application;
 pub mod entry;
 pub mod error;
 
 // Exports.
+pub use stall::*;
 pub use command::*;
