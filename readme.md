@@ -3,9 +3,9 @@
 
 Stall is a command line utility for managing configuration data within a directory.
 
-Running `stall init` in a directory will create a `.stall` file in that directory which tracks any files added, removed, or moved within the directory using `stall add`, `stall rm`, or `stall mv`. 
+Running `stall init` in a directory will create a `.stall` file in that directory which tracks any files added, removed, or moved by `stall add`, `stall rm`, or `stall mv`. 
 
-Tracked files (also 'stalled files') can be easily copied to and from their original locations via the `stall distribute` and `stall collect` commands respectively. These commands will ensure that copies will only occur if an older version of the file is being overwritten. Use `stall status` to display the status of all files tracked.
+Tracked files (also 'stalled files') can be easily copied to and from their original locations via the `stall distribute` and `stall collect` commands, respectively. These commands will ensure that copies will only occur if an older version of the file is being overwritten. Use `stall status` to display the status of all files tracked.
 
 Stall can make it easy to group, edit, backup, and apply version control to specific files dispersed among many different directories.
 
