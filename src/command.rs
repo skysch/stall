@@ -33,6 +33,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 // Standard library imports.
+use std::path::Path;
 use std::path::PathBuf;
 
 
@@ -58,13 +59,6 @@ pub struct CommonOptions {
 		parse(from_os_str),
 		hide(true))]
 	pub prefs: Option<PathBuf>,
-
-	/// The stall file to load.
-	#[clap(
-		short = 's',
-		long = "stall",
-		parse(from_os_str))]
-	pub stall: Option<PathBuf>,
 	
 	/// Shorten filenames by omitting path prefixes.
 	#[clap(
@@ -121,6 +115,14 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
+		/// The stall file to create.
+		#[clap(parse(from_os_str))]
+		stall: Option<PathBuf>,
+
+		/// Print intended operations instead of running them.
+		#[clap(long = "dry-run")]
+		dry_run: bool,
+
 		// TODO: Set rename policy
 		// TODO: Create prefs file?
 	},
@@ -129,6 +131,13 @@ pub enum CommandOptions {
 	Status {
 		#[clap(flatten)]
 		common: CommonOptions,
+
+		/// The stall file to load.
+		#[clap(
+			short = 's',
+			long = "stall",
+			parse(from_os_str))]
+		stall: Option<PathBuf>,
 
 		// TODO: Filter entries?
 	},
@@ -139,6 +148,13 @@ pub enum CommandOptions {
 	Add {
 		#[clap(flatten)]
 		common: CommonOptions,
+
+		/// The stall file to load.
+		#[clap(
+			short = 's',
+			long = "stall",
+			parse(from_os_str))]
+		stall: Option<PathBuf>,
 
 		/// The files to add to the stall.
 		#[clap(parse(from_os_str))]
@@ -178,6 +194,14 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
+		/// The stall file to load.
+		#[clap(
+			short = 's',
+			long = "stall",
+			parse(from_os_str))]
+		stall: Option<PathBuf>,
+		
+
 		/// The files to remove from to the stall.
 		#[clap(parse(from_os_str))]
 		files: Vec<PathBuf>,
@@ -207,6 +231,14 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
+		/// The stall file to load.
+		#[clap(
+			short = 's',
+			long = "stall",
+			parse(from_os_str))]
+		stall: Option<PathBuf>,
+		
+
 		/// The current name of the file in the stall.
 		#[clap(parse(from_os_str))]
 		from: PathBuf,
@@ -222,6 +254,14 @@ pub enum CommandOptions {
 	Collect {
 		#[clap(flatten)]
 		common: CommonOptions,
+
+		/// The stall file to load.
+		#[clap(
+			short = 's',
+			long = "stall",
+			parse(from_os_str))]
+		stall: Option<PathBuf>,
+		
 
 		/// Specific files to collect. Defaults to all files.
 		#[clap(parse(from_os_str))]
@@ -243,6 +283,14 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
+		/// The stall file to load.
+		#[clap(
+			short = 's',
+			long = "stall",
+			parse(from_os_str))]
+		stall: Option<PathBuf>,
+		
+
 		/// Specific files to distribute. Defaults to all files.
 		#[clap(parse(from_os_str))]
 		files: Vec<PathBuf>,
@@ -260,6 +308,34 @@ pub enum CommandOptions {
 }
 
 impl CommandOptions {
+	/// Returns true if the command requires an existing stall to be opened.
+	pub fn requires_preexisting_stall(&self) -> bool {
+		use CommandOptions::*;
+		match self {
+			Status { .. }     |
+			Add { .. }        |
+			Remove { .. }     |
+			Move { .. }       |
+			Collect { .. }    |
+			Distribute { .. } => true,
+			Init { .. }       => false,
+		}
+	}
+
+	/// Returns the provided stall path, if any.
+	pub fn stall(&self) -> Option<&Path> {
+		use CommandOptions::*;
+		match self {
+			Init { stall, .. }       |
+			Status { stall, .. }     |
+			Add { stall, .. }        |
+			Remove { stall, .. }     |
+			Move { stall, .. }       |
+			Collect { stall, .. }    |
+			Distribute { stall, .. } => stall.as_ref().map(|p| p.as_path()),
+		}
+	}
+
 	/// Returns the `CommonOptions`.
 	pub fn common(&self) -> &CommonOptions {
 		use CommandOptions::*;

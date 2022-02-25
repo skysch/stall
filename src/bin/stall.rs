@@ -122,7 +122,6 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 			event!(Level::DEBUG, "Using default prefs.");
 			Prefs::new().with_load_path(prefs_path)
 		},
-
 		Ok(prefs) => {
 			event!(Level::TRACE, "{:#?}", prefs); 
 			prefs
@@ -131,35 +130,34 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	event!(Level::DEBUG, "{:#?}", prefs);
 
 	// Find the path for the stall file.
-	let stall_path = match &common.stall {
-		Some(path) => path.clone(),
-		None       => cur_dir.join(Config::DEFAULT_STALL_PATH),
-	};
-	if !stall_path.is_file() {
-		return Err(anyhow!("stall path is not a file: {}",
-			stall_path.display()));
-	}
-	let stall_dir = match &common.stall {
-		Some(_path) => stall_path
+	let stall_dir = match command.stall() {
+		Some(path) if path.is_file() => path
 			.parent()
 			.ok_or_else(|| anyhow!(
 				"unable to determine stall parent directory: {}",
-				stall_path.display()))?
+				path.display()))?
 			.to_path_buf(),
-		None       => cur_dir,
+
+		Some(path) => path.to_path_buf(),
+		None       => cur_dir.clone(),
+	};
+
+	let stall_path = match command.stall() {
+		Some(path) if path.is_file() => path.to_path_buf(),
+		_ => cur_dir.join(Config::DEFAULT_STALL_PATH),
 	};
 
 	// Load the stall file.
 	let mut stall_data = match Stall::read_from_path(&stall_path) {
-		Err(e) if common.stall.is_some() => {
-			// Path is user-specified, so it is an error to now load it.
+		Err(e) if command.requires_preexisting_stall() => {
 			return Err(Error::from(e)).with_context(|| format!(
 				"Unable to load stall file: {:?}", 
 				stall_path));
 		},
 		Err(_) => {
 			// Path is default, so it is ok to use default stall.
-			event!(Level::DEBUG, "Using default stall file.");
+			event!(Level::DEBUG, "Creating stall file with path {:?}",
+				stall_path);
 			Stall::new(stall_path)
 		},
 
@@ -173,12 +171,16 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	// Dispatch to appropriate commands.
 	use CommandOptions::*;
 	let res = match command {
-		Init { common, .. }    => todo!(),
+		Init { common, dry_run, .. } => stall::init(
+			stall_dir.as_path(),
+			&mut stall_data,
+			dry_run,
+			&common),
 		
-		Status { common, .. }  => stall::status(
-			stall_dir,
+		Status { common, .. } => stall::status(
+			stall_dir.as_path(),
 			&stall_data,
-			common),
+			&common),
 
 		Add { common, files, rename, into, collect, dry_run, .. } => {
 			// Emit error if using --rename with multiple files.
@@ -223,7 +225,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 			files.iter().map(|f| f.as_path()),
 			force,
 			dry_run,
-			common),
+			&common),
 
 		Distribute { common, files, force, dry_run, .. } => stall::distribute(
 			stall_dir.as_path(),
@@ -231,7 +233,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 			files.iter().map(|f| f.as_path()),
 			force,
 			dry_run,
-			common),
+			&common),
 	};
 
 	// Save the stall data if any changes occurred.

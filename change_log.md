@@ -6,22 +6,21 @@ The following is a change log, documenting added, removed, changed, depricated, 
 ## Stall 0.2  [2022-02-??] (Unreleased)
 ----------------------------------------------------
 
-Implemented changes not yet published.
+An essential redesign of the stall command, this release supports a number of git-like state management CLI commands to make it easier to update and track the state of the stall. You no longer have to manually edit the .stall file to add/remove files into the stall directory (see stall-add, stall-rm), do dry-runs of collect/distribute to see the state of the stalled files (see stall-status), or ponder at the different relative views of file statuses offered by collect/disribute (the new status lines show both local and remote files side-by-side.)
+
+Stalled files can now be renamed within the stall directory, to ease support for collecting files with similar remote names.
 
 ### Added
 + Added `add` subcommand.
 + Added `rm` subcommand.
 + Added `status` subcommand.
-+ (TODO) Added `init` subcommand.
++ Added `init` subcommand.
 + (TODO) Added `mv` subcommand.
 + Added support for file renaming.
 + Show both file states for readability.
 + Added a message to indicate no changes when the stall is empty.
 
-### Fixed
-+ Fixed 'STATE' label for the error-skip case on the distribute command.
-
-### Changed
+### Breaking Changes
 + Updated command line flags.
 + Replaced structopt with clap 3.1.
 + Update application framework; replace logging with tracing.

@@ -60,7 +60,7 @@ pub fn distribute<'i, I>(
 	files: I,
 	force: bool,
 	dry_run: bool,
-	common: CommonOptions) 
+	common: &CommonOptions) 
 	-> Result<(), Error>
 	where I: IntoIterator<Item=&'i Path>
 {

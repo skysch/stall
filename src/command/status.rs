@@ -46,12 +46,11 @@ use std::io::Write as _;
 /// [`CommonOptions`]: ../command/struct.CommonOptions.html
 /// [`Error`]: ../error/struct.Error.html
 /// 
-pub fn status<P>(
-	stall_dir: P,
+pub fn status(
+	stall_dir: &Path,
 	stall: &Stall,
-	common: CommonOptions) 
+	common: &CommonOptions) 
 	-> Result<(), Error>
-	where P: AsRef<Path>,
 {
 	let _span = span!(Level::INFO, "status").entered();
 	
@@ -68,7 +67,6 @@ pub fn status<P>(
 	let mut out = std::io::stdout();
 
 	// Setup and print stall directory.
-	let stall_dir = stall_dir.as_ref();
 	if common.color.enabled() {
 		writeln!(&mut out, "{} {}",
 			"Stall directory:".bright_white(),
