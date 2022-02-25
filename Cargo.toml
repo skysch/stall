@@ -45,7 +45,7 @@ fcmp = { path = "../fcmp-rs/" }
 
 # Dependencies used for tests, examples, and benches.
 [dev-dependencies]
-pretty_assertions = "1.1.0"
+# pretty_assertions = "1.1.0"
 temp-dir = "0.1.11"
 test-log = { version = "0.2.8", default_features = false, features = ["trace"] }
 tracing = { version = "0.1.31", default-features = false }

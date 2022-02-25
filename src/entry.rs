@@ -142,7 +142,7 @@ impl<'a> Entry<'a> {
 		let (status_l, status_r) = self.status(stall_dir);
 		let action = match (&status_l, &status_r) {
 			(Exists, Absent) |
-			(Newer,  Newer)  => Action::Copy,
+			(Newer,  Older)  => Action::Copy,
 
 			(Same,   Same)  if force => Action::Force,
 			(Older,  Newer) if force => Action::Force,
