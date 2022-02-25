@@ -1,9 +1,9 @@
 
 # Releases
 
-The following is a change log, documenting added, removed, changed, depricated, and fixed features, along with the version number and official release date of that version.
+The following is a change log, documenting added, removed, changed, deprecated, and fixed features, along with the version number and official release date of that version.
 
-## Stall 0.2  [2022-02-??] (Unreleased)
+## Stall 0.2  [2022-02-25]
 ----------------------------------------------------
 
 An essential redesign of the stall command, this release supports a number of git-like state management CLI commands to make it easier to update and track the state of the stall. You no longer have to manually edit the .stall file to add/remove files into the stall directory (see stall-add, stall-rm), do dry-runs of collect/distribute to see the state of the stalled files (see stall-status), or ponder at the different relative views of file statuses offered by collect/disribute (the new status lines show both local and remote files side-by-side.)
