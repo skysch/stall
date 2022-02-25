@@ -15,7 +15,7 @@ Stalled files can now be renamed within the stall directory, to ease support for
 + Added `rm` subcommand.
 + Added `status` subcommand.
 + Added `init` subcommand.
-+ (TODO) Added `mv` subcommand.
++ Added `mv` subcommand.
 + Added support for file renaming.
 + Show both file states for readability.
 + Added a message to indicate no changes when the stall is empty.

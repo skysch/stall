@@ -132,7 +132,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file or directory containing it.
+		/// The stall file or directory.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -149,7 +149,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file or directory containing it.
+		/// The stall file or directory.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -194,7 +194,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file or directory containing it.
+		/// The stall file or directory.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -231,13 +231,12 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file or directory containing it.
+		/// The stall file or directory.
 		#[clap(
 			short = 's',
 			long = "stall",
 			parse(from_os_str))]
 		stall: Option<PathBuf>,
-		
 
 		/// The current name of the file in the stall.
 		#[clap(parse(from_os_str))]
@@ -247,7 +246,21 @@ pub enum CommandOptions {
 		#[clap(parse(from_os_str))]
 		to: PathBuf,
 
-		// TODO: Overwrite if exists?
+		/// Move the stalled file copy.
+		#[clap(
+			short = 'm',
+			long = "move")]
+		move_file: bool,
+
+		/// Force copy even if files exist.
+		#[clap(
+			short = 'f',
+			long = "force")]
+		force: bool,
+
+		/// Print intended operations instead of running them.
+		#[clap(long = "dry-run")]
+		dry_run: bool,
 	},
 
 	/// Copy files into the stall directory from their remote locations.
@@ -255,7 +268,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file or directory containing it.
+		/// The stall file or directory.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -283,7 +296,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file or directory containing it.
+		/// The stall file or directory.
 		#[clap(
 			short = 's',
 			long = "stall",

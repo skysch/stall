@@ -52,7 +52,6 @@ pub fn main() {
 		{
 			Ok(ErrorKind::DisplayHelp)    |
 			Ok(ErrorKind::DisplayVersion) => 0,
-			
 			_ => 1,
 		};
 
@@ -236,7 +235,16 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 				&common)
 		},
 
-		Move { common, .. }    => todo!(),
+		Move { common, from, to, move_file, force, dry_run, .. } => {
+			stall::rename(
+				&mut stall_data,
+				from.as_path(),
+				to.as_path(),
+				if move_file { Some(stall_dir.as_path()) } else { None },
+				force,
+				dry_run,
+				&common)
+		},
 
 		Collect { common, files, force, dry_run, .. } => stall::collect(
 			stall_dir.as_path(),
