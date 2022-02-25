@@ -20,6 +20,7 @@ use anyhow::Context;
 use anyhow::Error;
 use anyhow::anyhow;
 use clap::Parser;
+use clap::ErrorKind;
 use clap::CommandFactory as _;
 use tracing::event;
 use tracing::Level;
@@ -45,7 +46,17 @@ pub fn main() {
 		// Print errors to stderr and exit with error code.
 		colored::control::unset_override();
 		eprintln!("{:?}", err);
-		std::process::exit(1);
+
+		let exit_code = match err.downcast::<clap::Error>()
+			.map(|e| e.kind())
+		{
+			Ok(ErrorKind::DisplayHelp)    |
+			Ok(ErrorKind::DisplayVersion) => 0,
+			
+			_ => 1,
+		};
+
+		std::process::exit(exit_code);
 	}
 }
 
@@ -129,27 +140,35 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	};
 	event!(Level::DEBUG, "{:#?}", prefs);
 
-	// Find the path for the stall file.
-	let stall_dir = match command.stall() {
-		Some(path) if path.is_file() => path
-			.parent()
-			.ok_or_else(|| anyhow!(
-				"unable to determine stall parent directory: {}",
-				path.display()))?
-			.to_path_buf(),
+	// Find the paths for the stall directory and stall file.
+	let (stall_dir, stall_path) = match command.stall() {
+		Some(path) if path.is_file() && command.is_init() => {
+			return Err(anyhow!("file already exists: {}", path.display()));
+		},
 
-		Some(path) => path.to_path_buf(),
-		None       => cur_dir.clone(),
+		Some(path) if path.is_file() => ( 
+			path.parent()
+				.ok_or_else(|| anyhow!(
+					"unable to determine stall parent directory: {}",
+					path.display()))?
+				.to_path_buf(),
+			path.to_path_buf(),
+		),
+
+		Some(path) => (
+			path.to_path_buf(),
+			path.join(Config::DEFAULT_STALL_PATH),
+		),
+
+		None => (
+			cur_dir.clone(),
+			cur_dir.join(Config::DEFAULT_STALL_PATH),
+		),
 	};
 
-	let stall_path = match command.stall() {
-		Some(path) if path.is_file() => path.to_path_buf(),
-		_ => cur_dir.join(Config::DEFAULT_STALL_PATH),
-	};
-
-	// Load the stall file.
+	// Load/create the stall file.
 	let mut stall_data = match Stall::read_from_path(&stall_path) {
-		Err(e) if command.requires_preexisting_stall() => {
+		Err(e) if !command.is_init() => {
 			return Err(Error::from(e)).with_context(|| format!(
 				"Unable to load stall file: {:?}", 
 				stall_path));

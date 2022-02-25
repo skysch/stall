@@ -132,7 +132,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file to load.
+		/// The stall file or directory containing it.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -149,7 +149,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file to load.
+		/// The stall file or directory containing it.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -194,7 +194,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file to load.
+		/// The stall file or directory containing it.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -231,7 +231,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file to load.
+		/// The stall file or directory containing it.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -255,7 +255,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file to load.
+		/// The stall file or directory containing it.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -283,7 +283,7 @@ pub enum CommandOptions {
 		#[clap(flatten)]
 		common: CommonOptions,
 
-		/// The stall file to load.
+		/// The stall file or directory containing it.
 		#[clap(
 			short = 's',
 			long = "stall",
@@ -308,18 +308,9 @@ pub enum CommandOptions {
 }
 
 impl CommandOptions {
-	/// Returns true if the command requires an existing stall to be opened.
-	pub fn requires_preexisting_stall(&self) -> bool {
-		use CommandOptions::*;
-		match self {
-			Status { .. }     |
-			Add { .. }        |
-			Remove { .. }     |
-			Move { .. }       |
-			Collect { .. }    |
-			Distribute { .. } => true,
-			Init { .. }       => false,
-		}
+	/// Returns true if the command is an `Init` variant.
+	pub fn is_init(&self) -> bool {
+		matches!(self, CommandOptions::Init { .. })
 	}
 
 	/// Returns the provided stall path, if any.

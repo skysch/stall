@@ -25,6 +25,7 @@ Stalled files can now be renamed within the stall directory, to ease support for
 + Replaced structopt with clap 3.1.
 + Update application framework; replace logging with tracing.
 + Use fcmp to compare files.
++ Exit code for help and version output is now 0.
 
 
 ## Stall 0.1  [2020-07-01]

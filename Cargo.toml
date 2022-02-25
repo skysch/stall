@@ -45,7 +45,11 @@ fcmp = { path = "../fcmp-rs/" }
 
 # Dependencies used for tests, examples, and benches.
 [dev-dependencies]
-pretty_assertions = "*"
+pretty_assertions = "1.1.0"
+temp-dir = "0.1.11"
+test-log = { version = "0.2.8", default_features = false, features = ["trace"] }
+tracing = { version = "0.1.31", default-features = false }
+tracing-subscriber = { version = "0.3.9", default_features = false, features = ["env-filter", "fmt"] }
 
 
 # The development profile, used for `cargo build`

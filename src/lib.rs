@@ -17,7 +17,7 @@
 #![warn(missing_copy_implementations)]
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
+#![warn(rustdoc::missing_doc_code_examples)]
 #![warn(no_mangle_generic_items)]
 #![warn(non_shorthand_field_patterns)]
 #![warn(overflowing_literals)]
@@ -41,6 +41,8 @@
 
 // Internal modules.
 mod stall;
+#[cfg(test)]
+mod test;
 
 // Public modules.
 pub mod command;
@@ -49,5 +51,5 @@ pub mod entry;
 pub mod error;
 
 // Exports.
-pub use stall::*;
-pub use command::*;
+pub use crate::stall::*;
+pub use crate::command::*;
