@@ -131,6 +131,8 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "fcmp"
 version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe533945ed4f0598ec0db0ebaedf8f624bf1da67dfa0768eef25650fb2ea4c2a"
 dependencies = [
  "anyhow",
  "clap",

@@ -8,6 +8,7 @@ repository = "https://github.com/solarretrace/stall-rs"
 description = "A simple local configuration management utility"
 readme = "readme.md"
 keywords = []
+categories = ["command-line-utilities"]
 homepage = "https://github.com/solarretrace/stall-rs"
 exclude = [
 	"*.sublime-project",
@@ -28,18 +29,18 @@ bimap = { version = "0.6.2", features = ["serde"] }
 clap = { version = "3.1.0", features = ["derive", "suggestions", "color"] }
 colored = { version = "2.0.0" }
 either = "1.6.1"
-fcmp = { version = "0.2.1", git = "https://github.com/solarretrace/fcmp-rs" }
+fcmp = { version = "0.2.1"}
 ron = "0.7.0"
 rustc_version_runtime = "0.1"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.136", features = ["derive"] }
 tracing = { version = "0.1.31" }
 tracing-appender = "0.2.0"
 tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
 
 
 # Use local fcmp library.
-[patch."https://github.com/solarretrace/fcmp-rs"]
-fcmp = { path = "../fcmp-rs/" }
+# [patch."https://github.com/solarretrace/fcmp-rs"]
+# fcmp = { path = "../fcmp-rs/" }
 
 # Optional dependencies
 
@@ -80,7 +81,3 @@ codegen-units = 1
 incremental = false
 overflow-checks = true
 #strip = "debuginfo"
-
-[badges]
-maintenance = { status = "passively-maintained" }
-
