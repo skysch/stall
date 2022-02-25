@@ -15,6 +15,7 @@ use anyhow::Error;
 use anyhow::anyhow;
 use colored::Colorize as _;
 use fcmp::FileCmp;
+use fcmp::DiffOp;
 use tracing::event;
 use tracing::span;
 use tracing::Level;
@@ -43,13 +44,15 @@ impl<'a> Entry<'a> {
 		use Status::*;
 		use std::cmp::Ordering::*;
 
+		let diff_op = DiffOp::None;
+
 		let mut full_local = stall_dir.to_path_buf();
 		full_local.push(self.local);
 
-		let file_cmp_l = FileCmp::try_from(full_local.as_path())
+		let file_cmp_l = FileCmp::try_from(full_local.clone())
 			.map_err(|e| event!(Level::DEBUG, "{e}: {:?}",
 				full_local.as_path()));
-		let file_cmp_r = FileCmp::try_from(self.remote)
+		let file_cmp_r = FileCmp::try_from(self.remote.to_path_buf())
 			.map_err(|e| event!(Level::DEBUG, "{e}: {:?}", self.remote));
 
 		event!(Level::TRACE, "LOCAL {:?}", file_cmp_l);
@@ -66,7 +69,7 @@ impl<'a> Entry<'a> {
 				(false, false) => (Absent, Absent),
 				(true, false)  => (Exists, Absent),
 				(false, true)  => (Absent, Exists),
-				(true, true) => match l.partial_cmp(&r, false) {
+				(true, true) => match l.partial_cmp(&r, &diff_op, false) {
 					Some(Less)    => (Older, Newer),
 					Some(Equal)   => (Same,  Same),
 					Some(Greater) => (Newer, Older),
