@@ -66,7 +66,7 @@ pub fn add<'i, I>(
     let _span = span!(Level::INFO, "add").entered();
     if dry_run && common.quiet { return Ok(()); }
 
-    for remote in files.into_iter() {
+    for remote in files {
         event!(Level::DEBUG, "Add entry with remote path: {:?}", remote);
 
         let mut local = PathBuf::new();
@@ -78,7 +78,7 @@ pub fn add<'i, I>(
         if let Some(f) = rename {
             local.push(f);
         } else if let Some(f) = remote.file_name() {
-            local.push(f)
+            local.push(f);
         } else {
             if !common.quiet {
                 println!("Invalid remote file name: {}", remote.display());

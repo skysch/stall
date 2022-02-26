@@ -40,6 +40,7 @@ pub struct Entry<'a> {
 
 impl<'a> Entry<'a> {
 	/// Returns the file statuses for the local and remote entry paths.
+	#[must_use]
 	pub fn status(&self, stall_dir: &Path) -> (Status, Status) {
 		use Status::*;
 		use std::cmp::Ordering::*;
@@ -180,6 +181,7 @@ impl<'a> Entry<'a> {
 
 	}
 
+	/// Writes the header for the output of `write_status` into `out`.
 	pub(in crate) fn write_status_header(
 		out: &mut dyn Write,
 		common: &CommonOptions)
@@ -193,13 +195,11 @@ impl<'a> Entry<'a> {
 				"REMOTE".bright_white().bold(),
 				"FILE".bright_white().bold())
 		} else {
-			writeln!(out, "    {:<6} {:<6} {}", 
-				"LOCAL",
-				"REMOTE",
-				"FILE")
+			writeln!(out, "    LOCAL  REMOTE FILE")
 		}
 	}
 
+	/// Writes the header for the output of `write_status_action` into `out`.
 	pub(in crate) fn write_status_action_header(
 		out: &mut dyn Write,
 		common: &CommonOptions)
@@ -214,14 +214,11 @@ impl<'a> Entry<'a> {
 				"ACTION".bright_white().bold(),
 				"FILE".bright_white().bold())
 		} else {
-			writeln!(out, "    {:<6} {:<6} {:<6} {}", 
-				"LOCAL",
-				"REMOTE",
-				"ACTION",
-				"FILE")
+			writeln!(out, "    LOCAL  REMOTE ACTION FILE")
 		}
 	}
 
+	/// Writes the status of the entry into `out`.
 	pub(in crate) fn write_status(
 		&self,
 		out: &mut dyn Write,
@@ -237,10 +234,11 @@ impl<'a> Entry<'a> {
 		write!(out, " ")?;
 		status_r.write(out, common)?;
 		write!(out, " ")?;
-		self.write_path(out, common)?;
+		self.write_paths(out, common)?;
 		writeln!(out)
 	}
 
+	/// Writes the status of the entry and an `Action` selection into `out`.
 	pub(in crate) fn write_status_action(
 		&self,
 		out: &mut dyn Write,
@@ -259,11 +257,12 @@ impl<'a> Entry<'a> {
 		write!(out, " ")?;
 		action.write(out, common)?;
 		write!(out, " ")?;
-		self.write_path(out, common)?;
+		self.write_paths(out, common)?;
 		writeln!(out)
 	}
 
-	fn write_path(
+	/// Writes the paths of the entry into `out`.
+	fn write_paths(
 		&self,
 		out: &mut dyn Write,
 		common: &CommonOptions)
@@ -288,7 +287,6 @@ impl<'a> Entry<'a> {
 
 		Ok(())
 	}
-
 }
 
 
@@ -314,8 +312,9 @@ pub enum Status {
 }
 
 impl Status {
+	/// Write the status text into `out`.
 	fn write(
-		&self,
+		self,
 		out: &mut dyn Write,
 		common: &CommonOptions)
 		-> std::io::Result<()>
@@ -363,8 +362,9 @@ pub enum Action {
 }
 
 impl Action {
+	/// Write the action text into `out`.
 	fn write(
-		&self,
+		self,
 		out: &mut dyn Write,
 		common: &CommonOptions)
 		-> std::io::Result<()>
@@ -398,20 +398,20 @@ impl Action {
 fn copy(source: &Path, target: &Path, method: CopyMethod)
 	-> Result<(), Error>
 {
+	use CopyMethod::*;
 	let _span = span!(Level::DEBUG, "copy").entered();
 
-	use CopyMethod::*;
 	match method {
 		None => event!(Level::DEBUG, "no-run flag was specified: \
 			Not copying data from {:?} to {:?}", source, target),
 
 		Subprocess => {
-			let status = if cfg!(target_os = "windows") {
+			let _status = if cfg!(target_os = "windows") {
 				std::process::Command::new("Xcopy")
 					.arg(source)
 					.arg(target)
 					.args(["/h", "/s", "/e", "/x", "/y", "/i"])
-					.status()
+					.status()?
 			} else {
 				// NOTE: -R (recursive dir copy) and -p (preserve attribute
 				// such as timestamps) are POSIX requirements.
@@ -419,9 +419,8 @@ fn copy(source: &Path, target: &Path, method: CopyMethod)
 					.args(["-R", "-p"])
 					.arg(source)
 					.arg(target)
-					.status()
+					.status()?
 			};
-			let _ = status.expect("execute copy command");
 		},
 	}
 	Ok(())

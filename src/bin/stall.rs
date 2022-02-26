@@ -123,7 +123,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	let prefs = match Prefs::read_from_path(&prefs_path) {
 		Err(e) if common.prefs.is_some() => {
 			// Path is user-specified, so it is an error to now load it.
-			return Err(Error::from(e)).with_context(|| format!(
+			return Err(e).with_context(|| format!(
 				"Unable to load preferences file: {:?}", 
 				prefs_path));
 		},
@@ -168,7 +168,7 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 	// Load/create the stall file.
 	let mut stall_data = match Stall::read_from_path(&stall_path) {
 		Err(e) if !command.is_init() => {
-			return Err(Error::from(e)).with_context(|| format!(
+			return Err(e).with_context(|| format!(
 				"Unable to load stall file: {:?}", 
 				stall_path));
 		},
@@ -218,8 +218,8 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 			stall::add(
 				&mut stall_data,
 				files.iter().map(|f| f.as_path()),
-				rename.as_ref().map(|p| p.as_path()),
-				into.as_ref().map(|p| p.as_path()),
+				rename.as_deref(),
+				into.as_deref(),
 				if collect { Some(stall_dir.as_path()) } else { None },
 				dry_run,
 				&common)
@@ -265,12 +265,10 @@ pub fn main_facade(trace_guard: &mut TraceGuard) -> Result<(), Error> {
 
 	// Save the stall data if any changes occurred.
 	// TODO: Should the stall be saved if an error occurs above?
-	if stall_data.modified() {
-		if stall_data.write_to_load_path()? {
-			event!(Level::INFO, "Stall saved.");
-		}
+	if stall_data.modified() && stall_data.write_to_load_path()? {
+		event!(Level::INFO, "Stall saved.");
 	}
 
-	return res
+	res
 }
 

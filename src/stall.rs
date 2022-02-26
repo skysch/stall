@@ -55,10 +55,11 @@ pub struct Stall {
 
 impl Stall {
     /// Constructs a new `Stall` with the given load path.
+    #[must_use]
     pub fn new<P>(path: P) -> Self
         where P: AsRef<Path>
     {
-        Stall {
+        Self {
             load_status: LoadStatus::default()
                 .with_load_path(path),
             entries: BiBTreeMap::new(),
@@ -66,8 +67,9 @@ impl Stall {
     }
 
     /// Constructs a new `Stall` without a load path.
+    #[must_use]
     fn new_detached() -> Self {
-        Stall {
+        Self {
             load_status: LoadStatus::default(),
             entries: BiBTreeMap::new(),
         }
@@ -75,11 +77,13 @@ impl Stall {
 
     
     /// Returns `true` if there are no entries in the stall.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
     /// Returns the entry associated with the given local path, if it exists.
+    #[must_use]
     pub fn entry_local<'a>(&'a self, local: &'a Path) -> Option<Entry<'a>> {
         self.entries
             .get_by_left(local)
@@ -87,6 +91,7 @@ impl Stall {
     }
 
     /// Returns the entry associated with the given remote path, if it exists.
+    #[must_use]
     pub fn entry_remote<'a>(&'a self, remote: &'a Path) -> Option<Entry<'a>> {
         self.entries
             .get_by_right(remote)
@@ -94,7 +99,7 @@ impl Stall {
     }
 
     /// Returns an iterator over the entries in the stall.
-    pub fn entries<'a>(&'a self) -> impl Iterator<Item=Entry<'a>> {
+    pub fn entries(&self) -> impl Iterator<Item=Entry<'_>> {
         self.entries
             .iter()
             .map(|(l, r)| Entry {
@@ -146,7 +151,7 @@ impl Stall {
     }
 
     /// Inserts a new stall entry from a list file parse. Doesn't update the
-    /// load_status of the Stall.
+    /// load status of the Stall.
     ///
     /// ### Panics
     ///
@@ -155,7 +160,7 @@ impl Stall {
     fn insert_list_remote(&mut self, remote: PathBuf) {
         let local = remote.file_name().expect("invalid stall file_name");
 
-        let _ = self.entries.insert(local.into(), remote);
+        let _overwrite = self.entries.insert(local.into(), remote);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -299,7 +304,7 @@ impl Stall {
     /// Parses a `Stall` from a file using a newline-delimited file list
     /// format.
     fn parse_list_from_file(file: &mut File) -> Result<Self, Error> {
-        let mut stall = Stall::new_detached();
+        let mut stall = Self::new_detached();
         let buf_reader = BufReader::new(file);
         for line in buf_reader.lines() {
             let line = line
@@ -311,7 +316,7 @@ impl Stall {
 
             // Skip comment lines.
             if line.starts_with("//") { continue }
-            if line.starts_with("#") { continue }
+            if line.starts_with('#') { continue }
 
             let path: PathBuf = line.into();
             stall.insert_list_remote(path);

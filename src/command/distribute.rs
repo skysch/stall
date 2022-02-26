@@ -99,20 +99,19 @@ pub fn distribute<'i, I>(
 			"Stall directory:".bright_white(),
 			stall_dir.display())?;
 	} else {
-		writeln!(&mut out, "{} {}",
-			"Stall directory:",
+		writeln!(&mut out, "Stall directory: {}",
 			stall_dir.display())?;
 	}
 
 	// Process each entry table.
-	Entry::write_status_action_header(&mut out, &common)?;
+	Entry::write_status_action_header(&mut out, common)?;
 	for entry in entries {
 		entry.distribute(
 			&mut out,
 			stall_dir,
 			force,
 			dry_run,
-			&common)?;
+			common)?;
 	}
 
 	Ok(())

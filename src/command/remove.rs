@@ -62,7 +62,7 @@ pub fn remove<'i, I>(
     let _span = span!(Level::INFO, "add").entered();
     if dry_run && common.quiet { return Ok(()); }
 
-    for file in files.into_iter() {
+    for file in files {
         event!(Level::DEBUG, "Remove entry with path: {:?}", file);
 
         if dry_run {

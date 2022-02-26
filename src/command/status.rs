@@ -72,17 +72,16 @@ pub fn status(
 			"Stall directory:".bright_white(),
 			stall_dir.display())?;
 	} else {
-		writeln!(&mut out, "{} {}",
-			"Stall directory:",
+		writeln!(&mut out, "Stall directory: {}",
 			stall_dir.display())?;
 	}
 
 	// Write status table.
-	Entry::write_status_header(&mut out, &common)?;
+	Entry::write_status_header(&mut out, common)?;
 	for entry in stall.entries() {
 
 		let (status_l, status_r) = entry.status(stall_dir);
-		entry.write_status(&mut out, status_l, status_r, &common)?;
+		entry.write_status(&mut out, status_l, status_r, common)?;
 	}
 
 	Ok(())

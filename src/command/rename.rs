@@ -70,7 +70,7 @@ pub fn rename(
         return Ok(());
     }
 
-    if let Some(_) = stall.entry_local(to) {
+    if stall.entry_local(to).is_some() {
         // This move will overwrite an existing file.
         if !force {
             return Err(anyhow!("stall file already exists: {:?}\nUse --force \

@@ -1,13 +1,13 @@
 [package]
 name = "stall"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Skylor R Schermer <skyschermer@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/solarretrace/stall-rs"
 description = "A simple local configuration management utility"
 readme = "readme.md"
-keywords = []
+keywords = ["files"]
 categories = ["command-line-utilities"]
 homepage = "https://github.com/solarretrace/stall-rs"
 exclude = [
@@ -31,7 +31,7 @@ colored = { version = "2.0.0" }
 either = "1.6.1"
 fcmp = { version = "0.2.1"}
 ron = "0.7.0"
-rustc_version_runtime = "0.1"
+rustc_version_runtime = "0.2.1"
 serde = { version = "1.0.136", features = ["derive"] }
 tracing = { version = "0.1.31" }
 tracing-appender = "0.2.0"

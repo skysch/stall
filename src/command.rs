@@ -45,6 +45,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone)]
 #[derive(Parser)]
 #[clap(name = "stall")]
+#[allow(clippy::struct_excessive_bools)]
 pub struct CommonOptions {
 	/// The application configuration file to load.
 	#[clap(
@@ -112,6 +113,7 @@ pub struct CommonOptions {
 pub enum CommandOptions {
 	/// Intitialize a stall directory by generating a stall file.
 	Init {
+		/// Common command options.
 		#[clap(flatten)]
 		common: CommonOptions,
 
@@ -129,6 +131,7 @@ pub enum CommandOptions {
 
 	/// Print the status of stalled files.
 	Status {
+		/// Common command options.
 		#[clap(flatten)]
 		common: CommonOptions,
 
@@ -146,6 +149,7 @@ pub enum CommandOptions {
 
 	/// Add files to a stall.
 	Add {
+		/// Common command options.
 		#[clap(flatten)]
 		common: CommonOptions,
 
@@ -191,6 +195,7 @@ pub enum CommandOptions {
 	/// Remove files from a stall.
 	#[clap(name = "rm")]
 	Remove {
+		/// Common command options.
 		#[clap(flatten)]
 		common: CommonOptions,
 
@@ -228,6 +233,7 @@ pub enum CommandOptions {
 	/// the new name.
 	#[clap(name = "mv")]
 	Move {
+		/// Common command options.
 		#[clap(flatten)]
 		common: CommonOptions,
 
@@ -265,6 +271,7 @@ pub enum CommandOptions {
 
 	/// Copy files into the stall directory from their remote locations.
 	Collect {
+		/// Common command options.
 		#[clap(flatten)]
 		common: CommonOptions,
 
@@ -293,6 +300,7 @@ pub enum CommandOptions {
 
 	/// Copi files from the stall directory to their remote locations.
 	Distribute {
+		/// Common command options.
 		#[clap(flatten)]
 		common: CommonOptions,
 
@@ -322,11 +330,13 @@ pub enum CommandOptions {
 
 impl CommandOptions {
 	/// Returns true if the command is an `Init` variant.
+	#[must_use]
 	pub fn is_init(&self) -> bool {
 		matches!(self, CommandOptions::Init { .. })
 	}
 
 	/// Returns the provided stall path, if any.
+	#[must_use]
 	pub fn stall(&self) -> Option<&Path> {
 		use CommandOptions::*;
 		match self {
@@ -336,11 +346,12 @@ impl CommandOptions {
 			Remove { stall, .. }     |
 			Move { stall, .. }       |
 			Collect { stall, .. }    |
-			Distribute { stall, .. } => stall.as_ref().map(|p| p.as_path()),
+			Distribute { stall, .. } => stall.as_deref(),
 		}
 	}
 
 	/// Returns the `CommonOptions`.
+	#[must_use]
 	pub fn common(&self) -> &CommonOptions {
 		use CommandOptions::*;
 		match self {
@@ -377,14 +388,15 @@ pub enum ColorOption {
 
 impl ColorOption {
 	/// Returns true if colored output should be used.
+	#[must_use]
 	pub fn enabled(&self) -> bool {
 		match self {
-			ColorOption::Auto => {
+			Self::Auto => {
 				// Defer to `colored` for enviroment vars and TTY detection.
 				colored::control::SHOULD_COLORIZE.should_colorize()
 			},
-			ColorOption::Always => true,
-			ColorOption::Never => false,
+			Self::Always => true,
+			Self::Never => false,
 		}
 	}
 }
@@ -394,11 +406,11 @@ impl std::str::FromStr for ColorOption {
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		if s.eq_ignore_ascii_case("auto") {
-			Ok(ColorOption::Auto)
+			Ok(Self::Auto)
 		} else if s.eq_ignore_ascii_case("always") {
-			Ok(ColorOption::Always)
+			Ok(Self::Always)
 		} else if s.eq_ignore_ascii_case("never") {
-			Ok(ColorOption::Never)
+			Ok(Self::Never)
 		} else {
 			Err(ColorOptionParseError)
 		}

@@ -57,7 +57,7 @@ pub struct Config {
 
 impl Default for Config {
 	fn default() -> Self {
-		Config::new()
+		Self::new()
 	}
 }
 
